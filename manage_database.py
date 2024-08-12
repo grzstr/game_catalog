@@ -33,7 +33,7 @@ class database():
             """)
 
         #PLATFORM TABLE
-        for platform in ("Epic Games Store", "Steam", "GOG", "Ubisoft Connect", "Microsoft Store"):
+        for platform in ("Other", "Epic Games Store", "Steam", "GOG", "Ubisoft Connect", "Microsoft Store"):
             cursor.execute(f"""
             INSERT INTO platform (platform_name) VALUES ("{platform}")
             """)
@@ -41,7 +41,7 @@ class database():
         conn.close()
 
         #SUBSCRIPTION TABLE
-        for subscription, platform in zip(("Xbox Game Pass", "Ubisoft+"),("Microsoft Store", "Ubisoft Connect")):
+        for subscription, platform in zip(("None", "Xbox Game Pass", "Ubisoft+"),("Other", "Microsoft Store", "Ubisoft Connect")):
             platform_id = self.get_platform_id(platform)
             conn = sqlite3.connect(self.database_name)
             cursor = conn.cursor()
@@ -62,12 +62,14 @@ class database():
             platform_id INTEGER,
             subscription_id INTEGER,
             paid INTEGER,
-            publisher TEXT,
-            developer TEXT,
+            publisher_id INTEGER,
+            developer_id INTEGER,
             series_id INTEGER,
             FOREIGN KEY (status_id) REFERENCES status(id),
             FOREIGN KEY (platform_id) REFERENCES platform(id),
             FOREIGN KEY (subscription_id) REFERENCES subscription(id),
+            FOREIGN KEY (publisher_id) REFERENCES publisher(id),
+            FOREIGN KEY (developer_id) REFERENCES developer(id),
             FOREIGN KEY (series_id) REFERENCES series(id)
         )
         """)
@@ -83,6 +85,20 @@ class database():
         CREATE TABLE IF NOT EXISTS status (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             status_name TEXT
+        )
+        """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS developer (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            developer_name TEXT
+        )
+        """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS publisher (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            publisher_name TEXT
         )
         """)
 
@@ -118,6 +134,59 @@ class database():
         conn.close()
         return platform_id[0]
 
+    def get_subscription_id(self, subscription, platform_id):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM subscription WHERE subscription_name = :subscription", {"subscription": subscription})
+        subscription_id = cursor.fetchone()
+        if subscription_id is None:
+            cursor.execute("INSERT INTO subscription VALUES (:subscription, :platform_id)", {"subscription": subscription})
+            conn.commit()
+            cursor.execute("SELECT id FROM subscription WHERE subscription_name = :subscription", {"subscription": subscription, "platform_id": platform_id})
+            subscription_id = cursor.fetchone()
+        conn.close()
+        return subscription_id[0]
+
+    def get_series_id(self, series):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM series WHERE series_name = :series", {"series": series})
+        series_id = cursor.fetchone()
+        if series_id is None:
+            cursor.execute("INSERT INTO series (series_name) VALUES (:series)", {"series": series})
+            conn.commit()
+            cursor.execute("SELECT id FROM series WHERE series_name = :series", {"series": series})
+            series_id = cursor.fetchone()
+        conn.close()
+        return series_id[0]
+
+    def get_publisher_id(self, publisher):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM publisher WHERE publisher_name = :publisher", {"publisher": publisher})
+        publisher_id = cursor.fetchone()
+        if publisher_id is None:
+            cursor.execute("INSERT INTO publisher (publisher_name) VALUES (:publisher)", {"publisher": publisher})
+            conn.commit()
+            cursor.execute("SELECT id FROM publisher WHERE publisher_name = :publisher", {"publisher": publisher})
+            publisher_id = cursor.fetchone()
+        conn.close()
+        return publisher_id[0]
+
+    def get_developer_id(self, developer):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM developer WHERE developer_name = :developer", {"developer": developer})
+        developer_id = cursor.fetchone()
+        if developer_id is None:
+            cursor.execute("INSERT INTO developer (developer_name) VALUES (:developer)", {"developer": developer})
+            conn.commit()
+            cursor.execute("SELECT id FROM developer WHERE developer_name = :developer", {"developer": developer})
+            developer_id = cursor.fetchone()
+        conn.close()
+        return developer_id[0]
+
+
     def get_platform_name(self, id):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
@@ -150,6 +219,22 @@ class database():
         conn.close()
         return subscription_name[0]     
 
+    def get_publisher_name(self, id):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT publisher_name FROM publisher WHERE id = :publisher_id", {"publisher_id": id})
+        publisher_name = cursor.fetchone()
+        conn.close()
+        return publisher_name[0]    
+
+    def get_developer_name(self, id):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT developer_name FROM developer WHERE id = :developer_id", {"developer_id": id})
+        developer_name = cursor.fetchone()
+        conn.close()
+        return developer_name[0]    
+
     def check_status(self, status):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
@@ -160,19 +245,6 @@ class database():
             return 3
         else:
             return status_id[0]
-        
-    def get_subscription_id(self, subscription, platform_id):
-        conn = sqlite3.connect(self.database_name)
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM subscription WHERE subscription_name = :subscription", {"subscription": subscription})
-        subscription_id = cursor.fetchone()
-        if subscription_id is None:
-            cursor.execute("INSERT INTO subscription VALUES (:subscription, :platform_id)", {"subscription": subscription})
-            conn.commit()
-            cursor.execute("SELECT id FROM subscription WHERE subscription_name = :subscription", {"subscription": subscription, "platform_id": platform_id})
-            subscription_id = cursor.fetchone()
-        conn.close()
-        return subscription_id[0]
 
     def check_paid(self, paid):
         if paid == 1 or paid == 0:
@@ -180,23 +252,31 @@ class database():
         else:
             return 1
 
-    def get_series_id(self, series):
-        conn = sqlite3.connect(self.database_name)
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM series WHERE series_name = :series", {"series": series})
-        series_id = cursor.fetchone()
-        if series_id is None:
-            cursor.execute("INSERT INTO series (series_name) VALUES (:series)", {"series": series})
-            conn.commit()
-            cursor.execute("SELECT id FROM series WHERE series_name = :series", {"series": series})
-            series_id = cursor.fetchone()
-        conn.close()
-        return series_id[0]
-
     def add_platform(self, platform):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO platform (platform_name) VALUES (:platform)", {"platform": platform})
+        conn.commit()
+        conn.close()
+
+    def add_series(self, series):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO series (series_name) VALUES (:series)", {"series": series})
+        conn.commit()
+        conn.close()
+
+    def add_publisher(self, publisher):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO publisher (publisher_name) VALUES (:publisher)", {"publisher": publisher})
+        conn.commit()
+        conn.close()
+
+    def add_developer(self, developer):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO developer (developer_name) VALUES (:developer)", {"developer": developer})
         conn.commit()
         conn.close()
 
@@ -214,6 +294,8 @@ class database():
         subscription_id = self.get_subscription_id(subscription, platform_id)
         paid = self.check_paid(paid)
         series_id = self.get_series_id(series)
+        publisher_id = self.get_publisher_id(publisher)
+        developer_id = self.get_developer_id(developer)
 
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
@@ -226,8 +308,8 @@ class database():
             platform_id,
             subscription_id,
             paid,
-            publisher,
-            developer,
+            publisher_id,
+            developer_id,
             series_id
         ) VALUES (
             :title,
@@ -237,8 +319,8 @@ class database():
             :platform_id,
             :subscription_id,
             :paid,
-            :publisher,
-            :developer,
+            :publisher_id,
+            :developer_id,
             :series_id
         )
         """, {
@@ -249,10 +331,49 @@ class database():
             "platform_id": platform_id,
             "subscription_id": subscription_id,
             "paid": paid,
-            "publisher": publisher,
-            "developer": developer,
+            "publisher_id": publisher_id,
+            "developer_id": developer_id,
             "series_id": series_id
         })
+        conn.commit()
+        conn.close()
+
+    def modify_game(self, id, title, number_of_copies, game_time, status, platform, subscription, paid, publisher, developer, series):
+        platform_id = self.get_platform_id(platform)
+        status_id = self.check_status(status)
+        subscription_id = self.get_subscription_id(subscription, platform_id)
+        paid = self.check_paid(paid)
+        series_id = self.get_series_id(series)
+        publisher_id = self.get_publisher_id(publisher)
+        developer_id = self.get_developer_id(developer)
+
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("""
+        UPDATE games SET
+            title = ?,
+            number_of_copies = ?,
+            game_time = ?,
+            status_id = ?,
+            platform_id = ?,
+            subscription_id = ?,
+            paid = ?,
+            publisher_id = ?,
+            developer_id = ?,
+            series_id = ?
+        WHERE id = ?
+        """, (title,
+              number_of_copies,
+              game_time,
+              status_id,
+              platform_id,
+              subscription_id,
+              paid,
+              publisher_id,
+              developer_id,
+              series_id,
+              id
+        ))
         conn.commit()
         conn.close()
 
@@ -271,6 +392,14 @@ class database():
         conn.close()
         return games
     
+    def show_game(self, title):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM games WHERE title = :title", {"title": title})
+        game = cursor.fetchall()
+        conn.close()
+        return game
+
     def show_platform(self):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
@@ -286,3 +415,28 @@ class database():
         subscription = cursor.fetchall()
         conn.close()
         return subscription
+    
+    def show_series(self):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM series")
+        series = cursor.fetchall()
+        conn.close()
+        return series
+    
+    def show_publisher(self):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM publisher")
+        publisher = cursor.fetchall()
+        conn.close()
+        return publisher
+
+    def show_developer(self):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM developer")
+        developer = cursor.fetchall()
+        conn.close()
+        return developer
+    
