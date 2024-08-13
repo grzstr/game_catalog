@@ -27,7 +27,7 @@ class database():
         cursor = conn.cursor()
 
         #STATUS TABLE
-        for status in ("Finished", "Started", "Unstarted"):
+        for status in ("Finished", "Started", "Not started"):
             cursor.execute(f"""
             INSERT INTO status (status_name) VALUES ("{status}")
             """)
@@ -61,6 +61,7 @@ class database():
             status_id INTEGER,
             platform_id INTEGER,
             subscription_id INTEGER,
+            box INTEGER,
             paid INTEGER,
             publisher_id INTEGER,
             developer_id INTEGER,
@@ -238,7 +239,7 @@ class database():
     def check_status(self, status):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT status_name FROM status WHERE id = :status", {"status": status})
+        cursor.execute("SELECT id FROM status WHERE status_name = :status", {"status": status})
         status_id = cursor.fetchone()
         conn.close()
         if status_id is None:
@@ -251,6 +252,12 @@ class database():
             return paid
         else:
             return 1
+
+    def check_box(self, box):
+        if box == 1 or box == 0:
+            return box
+        else:
+            return 0
 
     def add_platform(self, platform):
         conn = sqlite3.connect(self.database_name)
@@ -288,11 +295,12 @@ class database():
         conn.commit()
         conn.close()
 
-    def add_game(self, title, number_of_copies, game_time, status, platform, subscription, paid, publisher, developer, series):
+    def add_game(self, title, number_of_copies, game_time, status, platform, subscription, box, paid, publisher, developer, series):
         platform_id = self.get_platform_id(platform)
         status_id = self.check_status(status)
         subscription_id = self.get_subscription_id(subscription, platform_id)
         paid = self.check_paid(paid)
+        box = self.check_box(box)
         series_id = self.get_series_id(series)
         publisher_id = self.get_publisher_id(publisher)
         developer_id = self.get_developer_id(developer)
@@ -307,6 +315,7 @@ class database():
             status_id,
             platform_id,
             subscription_id,
+            box,
             paid,
             publisher_id,
             developer_id,
@@ -318,6 +327,7 @@ class database():
             :status_id,
             :platform_id,
             :subscription_id,
+            :box,
             :paid,
             :publisher_id,
             :developer_id,
@@ -330,6 +340,7 @@ class database():
             "status_id": status_id,
             "platform_id": platform_id,
             "subscription_id": subscription_id,
+            "box": box,
             "paid": paid,
             "publisher_id": publisher_id,
             "developer_id": developer_id,
@@ -338,11 +349,12 @@ class database():
         conn.commit()
         conn.close()
 
-    def modify_game(self, id, title, number_of_copies, game_time, status, platform, subscription, paid, publisher, developer, series):
+    def modify_game(self, id, title, number_of_copies, game_time, status, platform, subscription, box, paid, publisher, developer, series):
         platform_id = self.get_platform_id(platform)
         status_id = self.check_status(status)
         subscription_id = self.get_subscription_id(subscription, platform_id)
         paid = self.check_paid(paid)
+        box = self.check_box(box)
         series_id = self.get_series_id(series)
         publisher_id = self.get_publisher_id(publisher)
         developer_id = self.get_developer_id(developer)
@@ -357,6 +369,7 @@ class database():
             status_id = ?,
             platform_id = ?,
             subscription_id = ?,
+            box = ?,
             paid = ?,
             publisher_id = ?,
             developer_id = ?,
@@ -368,6 +381,7 @@ class database():
               status_id,
               platform_id,
               subscription_id,
+              box,
               paid,
               publisher_id,
               developer_id,
@@ -391,7 +405,23 @@ class database():
         games = cursor.fetchall()
         conn.close()
         return games
+
+    def show_owned_games(self):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM games WHERE subscription_id = :subscription_id", {"subscription_id": self.get_subscription_id("None", self.get_platform_id("Other"))})
+        games = cursor.fetchall()
+        conn.close()
+        return games
     
+    def show_subscription_games(self):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM games WHERE NOT subscription_id = :subscription_id", {"subscription_id": self.get_subscription_id("None", self.get_platform_id("Other"))})
+        games = cursor.fetchall()
+        conn.close()
+        return games
+
     def show_game(self, title):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
@@ -399,7 +429,7 @@ class database():
         game = cursor.fetchall()
         conn.close()
         return game
-
+    
     def show_platform(self):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
