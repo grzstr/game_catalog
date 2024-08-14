@@ -35,72 +35,72 @@ def convert_status(started, finished):
     
 def convert_platform(epic, steam, rockstar, gog, bethesda, ea, muve, ubisoft, android, microsoft, other, cdaction):
     platform = ""
-    if epic == 1:
+    if epic >= 1:
         platform += "Epic Games Store"
-    if steam == 1:
+    if steam >= 1:
         if platform != "":
             platform += "/"
         platform += "Steam"
-    if rockstar == 1:
+    if rockstar >= 1:
         if platform != "":
             platform += "/"
         platform += "Rockstar Games Launcher"
-    if gog == 1:
+    if gog >= 1:
         if platform != "":
             platform += "/"
         platform += "GOG"
-    if bethesda == 1:
+    if bethesda >= 1:
         if platform != "":
             platform += "/"
         platform += "Bethesda Launcher"
-    if ea == 1:
+    if ea >= 1:
         if platform != "":
             platform += "/"
         platform += "EA"
-    if muve == 1:
+    if muve >= 1:
         if platform != "":
             platform += "/"
         platform += "Muve"
-    if ubisoft == 1:
+    if ubisoft >= 1:
         if platform != "":
             platform += "/"
         platform += "Ubisoft Connect"
-    if android == 1:
+    if android >= 1:
         if platform != "":
             platform += "/"
         platform += "Android"
-    if microsoft == 1:
+    if microsoft >= 1:
         if platform != "":
             platform += "/"
         platform += "Microsoft Store"
-    if other == 1:
+    if other >= 1:
         if platform != "":
             platform += "/"
         platform += "Other"
-    if cdaction == 1:
+    if cdaction >= 1:
         if platform != "":
             platform += "/"
         platform += "CD-Action"
 
     if epic == 0 and steam == 0 and rockstar == 0 and gog == 0 and bethesda == 0 and ea == 0 and muve == 0 and ubisoft == 0 and android == 0 and microsoft == 0 and other == 0 and cdaction == 0:
-        return "Other"
+        return "None"
 
     return platform
 
 
 def convert_subscription(xbox, ea, ubisoft):
     subscription = ""
-    if xbox == 1:
+    if xbox >= 1:
         subscription += "Xbox Game Pass"
-    if ea == 1:
+    if ea >= 1:
         if subscription != "":
             subscription += "/"
         subscription += "EA Play"
-    if ubisoft == 1:
+    if ubisoft >= 1:
         if subscription != "":
             subscription += "/"
         subscription += "Ubisoft+"
-    if subscription == "":
+    if subscription >= "":
         return "None"
     
     return subscription

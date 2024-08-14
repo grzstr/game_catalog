@@ -465,26 +465,101 @@ def main(page: ft.Page):
             rows =[
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text("Total number of games")),
+                        ft.DataCell(ft.Text("Total")),
                         ft.DataCell(ft.Text(str(len(base.show_games()))))
                     ]
                 ),
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text("Number of games owned")),
+                        ft.DataCell(ft.Text("Owned")),
                         ft.DataCell(ft.Text(str(len(base.show_owned_games()))))
                     ]
                 ),
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text("Number of subscription games")),
+                        ft.DataCell(ft.Text("Subscripted")),
                         ft.DataCell(ft.Text(str(len(base.show_subscription_games()))))
+                    ]
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Purchased")),
+                        ft.DataCell(ft.Text(str(len(base.show_purchased_games()))))
+                    ]
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Free")),
+                        ft.DataCell(ft.Text(str(len(base.show_free_games()))))
+                    ]
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Box")),
+                        ft.DataCell(ft.Text(str(len(base.show_box_games()))))
+                    ]
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Digital")),
+                        ft.DataCell(ft.Text(str(len(base.show_digital_games()))))
                     ]
                 ),
             ]
 
             )
-    
+
+    def sort_platforms(games_by_platform):
+        platforms = base.show_platform()
+        platform_dict = {}
+        for platform in platforms:
+            if len(platform[1])>1 and platform[1] != "Other":
+                if platform[1] not in platform_dict and "/" not in platform[1]:
+                    platform_dict[platform[1]] = len(games_by_platform(platform[1]))
+                else:
+                    platform_list = platform[1].split("/")
+                    for splited_platform in platform_list:
+                        if splited_platform not in platform_dict:
+                            platform_dict[splited_platform] = len(games_by_platform(platform[1]))
+                        else:
+                            platform_dict[splited_platform] += len(games_by_platform(platform[1]))
+
+        return platform_dict
+
+
+
+    def platform_plot():
+        bar_groups = []
+        labels = []
+
+        purchased_games = sort_platforms(base.show_purchased_games_by_platform)
+        free_games = sort_platforms(base.show_free_games_by_platform)
+
+        i = 0
+        for platform in purchased_games:
+            bar_groups.append(ft.BarChartGroup(x=i, bar_rods=[ft.BarChartRod(from_y=0,to_y=purchased_games[platform],color="blue"),
+                                                                          ft.BarChartRod(from_y=0,to_y=free_games[platform],color="red")]))
+            labels.append(ft.ChartAxisLabel(value=i, label=ft.Container(ft.Text(platform), padding=10)))
+            i+=1
+
+        return ft.BarChart(
+            bar_groups= bar_groups,
+            border=ft.border.all(1, ft.colors.GREY_400),
+            left_axis=ft.ChartAxis(
+                labels_size=40, title=ft.Text("Value"), title_size=40
+            ),
+            bottom_axis=ft.ChartAxis(labels = labels, labels_size=40),
+            horizontal_grid_lines=ft.ChartGridLines(
+                color=ft.colors.GREY_300, width=1, dash_pattern=[3, 3]
+            ),
+            tooltip_bgcolor=ft.colors.with_opacity(0.5, ft.colors.GREY_300),
+            max_y=110,
+            min_y=0,
+            interactive=True,
+            expand=False,
+        )
+       
+
     def total_game_time_table():
         return ft.DataTable(columns=[
                 ft.DataColumn(ft.Text("Total playing time:")),
@@ -554,7 +629,7 @@ def main(page: ft.Page):
             ]
             )     
 
-    def summaries():          
+    def statistics_tabs():          
             return ft.Tabs(
             selected_index=0,
             animation_duration=300,
@@ -562,8 +637,10 @@ def main(page: ft.Page):
             ft.Tab(
                 text="Summaries",
                 content=ft.Column([
+                        ft.Text(""),
                         ft.Text("Summaries of games database."),
-                        number_of_games_table()
+                        number_of_games_table(),
+                        platform_plot()
             ])),
             ft.Tab(
                 text="Playing time",
@@ -574,12 +651,14 @@ def main(page: ft.Page):
                         the_shortest_game_time_table()
             ])),
             ft.Tab(
-                text="Tab 3",
+                text="Percentage of games",
                 icon=ft.icons.SETTINGS,
-                content=ft.Text("This is Tab 3"),
+                content=ft.Column([
+                        ft.Text("Playing time."),
+                        total_game_time_table()])
             ),
         ],
-        expand=1,
+        expand=True,
     )
             
             
@@ -587,7 +666,7 @@ def main(page: ft.Page):
         if base.exist():
             return ft.Column([
                 ft.Text("Statistics View", style="headlineMedium"),
-                summaries(),
+                statistics_tabs(),
             ], scroll=ft.ScrollMode.AUTO, expand=True)
         else:
             return ft.Column([
@@ -615,16 +694,37 @@ def main(page: ft.Page):
     # ***************
 
     def settings_view():
-        return ft.Column([
-            ft.Text("Wishlist View", style="headlineMedium"),
-            ft.Text("Explore different options available."),
-            ft.ListView([
-                ft.Text("Option 1"),
-                ft.Text("Option 2"),
-                ft.Text("Option 3"),
-            ]),
-            ft.Image(src="https://placekitten.com/200/300"),
-        ])
+        return ft.Tabs(
+            selected_index=0,
+            animation_duration=300,
+            tabs=[
+            ft.Tab(
+                text="Summaries",
+                content=ft.Column([
+                        ft.Text(""),
+                        ft.Text("Summaries of games database."),
+                        number_of_games_table(),
+                        platform_plot()
+            ], expand=True)),
+            ft.Tab(
+                text="Playing time",
+                content=ft.Column([
+                        ft.Text("Playing time."),
+                        total_game_time_table(),
+                        the_longest_game_time_table(),
+                        the_shortest_game_time_table()
+            ])),
+            ft.Tab(
+                text="Percentage of games",
+                icon=ft.icons.SETTINGS,
+                content=ft.Column([
+                        ft.Text("Playing time."),
+                        total_game_time_table()])
+            ),
+        ],
+        expand=True,
+        
+    )
 
     # Funkcja obsługująca zmianę zakładki
     def on_tab_change(event, list_begin, list_end):
@@ -646,7 +746,7 @@ def main(page: ft.Page):
                 ft.NavigationBarDestination(icon=ft.icons.EXPLORE, label="Game list"),
                 ft.NavigationBarDestination(icon=ft.icons.BOOKMARK_BORDER, label="Wishlist"),
                 ft.NavigationBarDestination(icon=ft.icons.COMMUTE, label="Statistics"),
-                ft.NavigationBarDestination(icon=ft.icons.BOOKMARK_BORDER, selected_icon=ft.icons.BOOKMARK, label="Settings"),
+                ft.NavigationBarDestination(icon=ft.icons.SETTINGS, label="Settings"),
             ],
             on_change=lambda e:on_tab_change(e, list_begin, list_end),
         )

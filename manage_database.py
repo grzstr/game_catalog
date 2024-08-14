@@ -422,6 +422,56 @@ class database():
         conn.close()
         return games
 
+    def show_purchased_games(self):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM games WHERE paid = :paid", {"paid": 1})
+        games = cursor.fetchall()
+        conn.close()
+        return games
+    
+    def show_purchased_games_by_platform(self, platform):
+        platform_id = self.get_platform_id(platform)
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM games WHERE paid = :paid AND platform_id = :platform_id", {"paid": 1, "platform_id": platform_id})
+        games = cursor.fetchall()
+        conn.close()
+        return games
+
+    def show_free_games_by_platform(self, platform):
+        platform_id = self.get_platform_id(platform)
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM games WHERE paid = :paid AND platform_id = :platform_id", {"paid": 0, "platform_id": platform_id})
+        games = cursor.fetchall()
+        conn.close()
+        return games
+
+    def show_free_games(self):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM games WHERE paid = :paid", {"paid": 0})
+        games = cursor.fetchall()
+        conn.close()
+        return games
+
+    def show_box_games(self):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM games WHERE box = :box", {"box": 1})
+        games = cursor.fetchall()
+        conn.close()
+        return games
+
+    def show_digital_games(self):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM games WHERE box = :box", {"box": 0})
+        games = cursor.fetchall()
+        conn.close()
+        return games
+
     def show_game(self, title):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
