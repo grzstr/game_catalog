@@ -32,20 +32,27 @@ class database():
             INSERT INTO status (status_name) VALUES ("{status}")
             """)
 
+        #GAMES STORE TABLE
+        for games_store in ("None", "Other", "Epic Games Store", "Steam", "GOG", "Ubisoft Connect", "Microsoft Store"):
+            cursor.execute(f"""
+            INSERT INTO games_store (games_store_name) VALUES ("{games_store}")
+            """)
+
         #PLATFORM TABLE
-        for platform in ("Other", "Epic Games Store", "Steam", "GOG", "Ubisoft Connect", "Microsoft Store"):
+        for platform in ("Other", "PC", "Google Play", "iOS", "PlayStation", "Xbox", "Nintendo"):
             cursor.execute(f"""
             INSERT INTO platform (platform_name) VALUES ("{platform}")
             """)
+
         conn.commit()
         conn.close()
 
         #SUBSCRIPTION TABLE
-        for subscription, platform in zip(("None", "Xbox Game Pass", "Ubisoft+"),("Other", "Microsoft Store", "Ubisoft Connect")):
-            platform_id = self.get_platform_id(platform)
+        for subscription, games_store in zip(("None", "Xbox Game Pass", "Ubisoft+"),("None", "Microsoft Store", "Ubisoft Connect")):
+            games_store_id = self.get_games_store_id(games_store)
             conn = sqlite3.connect(self.database_name)
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO subscription (subscription_name, platform_id) VALUES (:subscription, :platform_id)", {"subscription": subscription, "platform_id":platform_id})
+            cursor.execute("INSERT INTO subscription (subscription_name, games_store_id) VALUES (:subscription, :games_store_id)", {"subscription": subscription, "games_store_id":games_store_id})
             conn.commit()
             conn.close()
 
@@ -60,6 +67,7 @@ class database():
             game_time REAL,
             status_id INTEGER,
             platform_id INTEGER,
+            games_store_id INTEGER,
             subscription_id INTEGER,
             box INTEGER,
             paid INTEGER,
@@ -68,10 +76,31 @@ class database():
             series_id INTEGER,
             FOREIGN KEY (status_id) REFERENCES status(id),
             FOREIGN KEY (platform_id) REFERENCES platform(id),
+            FOREIGN KEY (games_store_id) REFERENCES games_store(id),
             FOREIGN KEY (subscription_id) REFERENCES subscription(id),
             FOREIGN KEY (publisher_id) REFERENCES publisher(id),
             FOREIGN KEY (developer_id) REFERENCES developer(id),
             FOREIGN KEY (series_id) REFERENCES series(id)
+        )
+        """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS wishlist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            platform_id INTEGER,
+            publisher_id INTEGER,
+            developer_id INTEGER,
+            FOREIGN KEY (platform_id) REFERENCES platform(id),
+            FOREIGN KEY (publisher_id) REFERENCES publisher(id),
+            FOREIGN KEY (developer_id) REFERENCES developer(id)
+        )
+        """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS games_store (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            games_store_name TEXT
         )
         """)
 
@@ -107,8 +136,8 @@ class database():
         CREATE TABLE IF NOT EXISTS subscription (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             subscription_name TEXT,
-            platform_id INTEGER,
-            FOREIGN KEY (platform_id) REFERENCES platform(id)
+            games_store_id INTEGER,
+            FOREIGN KEY (games_store_id) REFERENCES games_store(id)
         )
         """)
 
@@ -135,15 +164,28 @@ class database():
         conn.close()
         return platform_id[0]
 
-    def get_subscription_id(self, subscription, platform_id):
+    def get_games_store_id(self, games_store):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM games_store WHERE games_store_name = :games_store", {"games_store": games_store})
+        games_store_id = cursor.fetchone()
+        if games_store_id is None:
+            cursor.execute("INSERT INTO games_store (games_store_name) VALUES (:games_store)", {"games_store": games_store})
+            conn.commit()
+            cursor.execute("SELECT id FROM games_store WHERE games_store_name = :games_store", {"games_store": games_store})
+            games_store_id = cursor.fetchone()
+        conn.close()
+        return games_store_id[0]
+
+    def get_subscription_id(self, subscription, games_store_id):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM subscription WHERE subscription_name = :subscription", {"subscription": subscription})
         subscription_id = cursor.fetchone()
         if subscription_id is None:
-            cursor.execute("INSERT INTO subscription VALUES (:subscription, :platform_id)", {"subscription": subscription})
+            cursor.execute("INSERT INTO subscription VALUES (:subscription, :games_store_id)", {"subscription": subscription})
             conn.commit()
-            cursor.execute("SELECT id FROM subscription WHERE subscription_name = :subscription", {"subscription": subscription, "platform_id": platform_id})
+            cursor.execute("SELECT id FROM subscription WHERE subscription_name = :subscription", {"subscription": subscription, "games_store_id": games_store_id})
             subscription_id = cursor.fetchone()
         conn.close()
         return subscription_id[0]
@@ -187,7 +229,6 @@ class database():
         conn.close()
         return developer_id[0]
 
-
     def get_platform_name(self, id):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
@@ -195,6 +236,14 @@ class database():
         platform_name = cursor.fetchone()
         conn.close()
         return platform_name[0]       
+
+    def get_games_store_name(self, id):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT games_store_name FROM games_store WHERE id = :games_store_id", {"games_store_id": id})
+        games_store_name = cursor.fetchone()
+        conn.close()
+        return games_store_name[0]       
 
     def get_status_name(self, id):
         conn = sqlite3.connect(self.database_name)
@@ -259,6 +308,13 @@ class database():
         else:
             return 0
 
+    def add_games_store(self, games_store):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO games_store (games_store_name) VALUES (:games_store)", {"games_store": games_store})
+        conn.commit()
+        conn.close()
+
     def add_platform(self, platform):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
@@ -287,18 +343,47 @@ class database():
         conn.commit()
         conn.close()
 
-    def add_subscription(self, subscription, platform):
-        platform_id = self.get_platform_id(platform)
+    def add_subscription(self, subscription, games_store):
+        games_store_id = self.get_games_store_id(games_store)
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO subscription (subscription_name, platform_id) VALUES (:subscription, :platform_id)", {"subscription": subscription, "platform_id":platform_id})
+        cursor.execute("INSERT INTO subscription (subscription_name, games_store_id) VALUES (:subscription, :games_store_id)", {"subscription": subscription, "games_store_id":games_store_id})
         conn.commit()
         conn.close()
 
-    def add_game(self, title, number_of_copies, game_time, status, platform, subscription, box, paid, publisher, developer, series):
+    def add_game_to_wishlist(self, title, platform, publisher, developer):
+            platform_id = self.get_platform_id(platform)
+            publisher_id = self.get_publisher_id(publisher)
+            developer_id = self.get_developer_id(developer)
+
+            conn = sqlite3.connect(self.database_name)
+            cursor = conn.cursor()
+            cursor.execute("""
+            INSERT INTO wishlist (
+                title,
+                platform_id,
+                publisher_id,
+                developer_id
+            ) VALUES (
+                :title,
+                :platform_id,
+                :publisher_id,
+                :developer_id
+            )
+            """, {
+                "title": title,
+                "platform_id": platform_id,
+                "publisher_id": publisher_id,
+                "developer_id": developer_id
+            })
+            conn.commit()
+            conn.close()
+
+    def add_game(self, title, number_of_copies, game_time, status, platform, games_store, subscription, box, paid, publisher, developer, series):
         platform_id = self.get_platform_id(platform)
+        games_store_id = self.get_games_store_id(games_store)
         status_id = self.check_status(status)
-        subscription_id = self.get_subscription_id(subscription, platform_id)
+        subscription_id = self.get_subscription_id(subscription, games_store_id)
         paid = self.check_paid(paid)
         box = self.check_box(box)
         series_id = self.get_series_id(series)
@@ -314,6 +399,7 @@ class database():
             game_time,
             status_id,
             platform_id,
+            games_store_id,
             subscription_id,
             box,
             paid,
@@ -326,6 +412,7 @@ class database():
             :game_time,
             :status_id,
             :platform_id,
+            :games_store_id,
             :subscription_id,
             :box,
             :paid,
@@ -339,6 +426,7 @@ class database():
             "game_time": game_time,
             "status_id": status_id,
             "platform_id": platform_id,
+            "games_store_id": games_store_id,
             "subscription_id": subscription_id,
             "box": box,
             "paid": paid,
@@ -349,10 +437,11 @@ class database():
         conn.commit()
         conn.close()
 
-    def modify_game(self, id, title, number_of_copies, game_time, status, platform, subscription, box, paid, publisher, developer, series):
+    def modify_game(self, id, title, number_of_copies, game_time, status, platform, games_store, subscription, box, paid, publisher, developer, series):
         platform_id = self.get_platform_id(platform)
+        games_store_id = self.get_games_store_id(games_store)
         status_id = self.check_status(status)
-        subscription_id = self.get_subscription_id(subscription, platform_id)
+        subscription_id = self.get_subscription_id(subscription, games_store_id)
         paid = self.check_paid(paid)
         box = self.check_box(box)
         series_id = self.get_series_id(series)
@@ -368,6 +457,7 @@ class database():
             game_time = ?,
             status_id = ?,
             platform_id = ?,
+            games_store_id = ?,
             subscription_id = ?,
             box = ?,
             paid = ?,
@@ -380,6 +470,7 @@ class database():
               game_time,
               status_id,
               platform_id,
+              games_store_id,
               subscription_id,
               box,
               paid,
@@ -391,6 +482,48 @@ class database():
         conn.commit()
         conn.close()
 
+    def delete_subscription(self, subscription_name):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM subscription WHERE subscription_name = :subscription_name", {"subscription_name": subscription_name})
+        conn.commit()
+        conn.close()
+
+    def delete_developer(self, developer_name):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM developer WHERE developer_name = :developer_name", {"developer_name": developer_name})
+        conn.commit()
+        conn.close()
+
+    def delete_series(self, series_name):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM series WHERE series_name = :series_name", {"series_name": series_name})
+        conn.commit()
+        conn.close()
+
+    def delete_platform(self, platform_name):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM platform WHERE platform_name = :platform_name", {"platform_name": platform_name})
+        conn.commit()
+        conn.close()
+
+    def delete_games_store(self, games_store_name):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM games_store WHERE games_store_name = :games_store_name", {"games_store_name": games_store_name})
+        conn.commit()
+        conn.close()
+
+    def delete_publisher(self, publisher_name):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM publisher WHERE publisher_name = :publisher_name", {"publisher_name": publisher_name})
+        conn.commit()
+        conn.close()
+
     def delete_game(self, title):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
@@ -398,10 +531,31 @@ class database():
         conn.commit()
         conn.close()
 
-    def show_games(self):
+    def delete_wishlist_game(self, title):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM games")
+        cursor.execute("DELETE FROM wishlist WHERE title = :title", {"title": title})
+        conn.commit()
+        conn.close()
+
+    def show_games(self, find=None):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        if find == None:
+            cursor.execute("SELECT * FROM games")
+        else:
+            cursor.execute("SELECT * FROM games WHERE title = :title", {"title": find})
+        games = cursor.fetchall()
+        conn.close()
+        return games
+    
+    def show_wishlist_games(self, find=None):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        if find == None:
+            cursor.execute("SELECT * FROM wishlist")
+        else:
+            cursor.execute("SELECT * FROM wishlist WHERE title = :title", {"title": find})
         games = cursor.fetchall()
         conn.close()
         return games
@@ -409,7 +563,7 @@ class database():
     def show_owned_games(self):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM games WHERE subscription_id = :subscription_id", {"subscription_id": self.get_subscription_id("None", self.get_platform_id("Other"))})
+        cursor.execute("SELECT * FROM games WHERE subscription_id = :subscription_id", {"subscription_id": self.get_subscription_id("None", self.get_games_store_id("Other"))})
         games = cursor.fetchall()
         conn.close()
         return games
@@ -417,7 +571,7 @@ class database():
     def show_subscription_games(self):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM games WHERE NOT subscription_id = :subscription_id", {"subscription_id": self.get_subscription_id("None", self.get_platform_id("Other"))})
+        cursor.execute("SELECT * FROM games WHERE NOT subscription_id = :subscription_id", {"subscription_id": self.get_subscription_id("None", self.get_games_store_id("Other"))})
         games = cursor.fetchall()
         conn.close()
         return games
@@ -430,20 +584,20 @@ class database():
         conn.close()
         return games
     
-    def show_purchased_games_by_platform(self, platform):
-        platform_id = self.get_platform_id(platform)
+    def show_purchased_games_by_games_store(self, games_store):
+        games_store_id = self.get_games_store_id(games_store)
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM games WHERE paid = :paid AND platform_id = :platform_id", {"paid": 1, "platform_id": platform_id})
+        cursor.execute("SELECT * FROM games WHERE paid = :paid AND games_store_id = :games_store_id", {"paid": 1, "games_store_id": games_store_id})
         games = cursor.fetchall()
         conn.close()
         return games
 
-    def show_free_games_by_platform(self, platform):
-        platform_id = self.get_platform_id(platform)
+    def show_free_games_by_games_store(self, games_store):
+        games_store_id = self.get_games_store_id(games_store)
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM games WHERE paid = :paid AND platform_id = :platform_id", {"paid": 0, "platform_id": platform_id})
+        cursor.execute("SELECT * FROM games WHERE paid = :paid AND games_store_id = :games_store_id", {"paid": 0, "games_store_id": games_store_id})
         games = cursor.fetchall()
         conn.close()
         return games
@@ -472,6 +626,14 @@ class database():
         conn.close()
         return games
 
+    def show_wishlist_game(self, title):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM wishlist WHERE title = :title", {"title": title})
+        game = cursor.fetchall()
+        conn.close()
+        return game
+
     def show_game(self, title):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
@@ -480,6 +642,14 @@ class database():
         conn.close()
         return game
     
+    def show_games_store(self):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM games_store")
+        games_store = cursor.fetchall()
+        conn.close()
+        return games_store
+    
     def show_platform(self):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
@@ -487,7 +657,7 @@ class database():
         platform = cursor.fetchall()
         conn.close()
         return platform
-    
+
     def show_subscription(self):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
