@@ -1,10 +1,11 @@
 import flet as ft
 import time
-from manage_database import database
+from stats import games_stats
 
 def main(page: ft.Page):
     page.title = "Game Catalog"
-    base = database()
+    stats = games_stats()
+    base = stats.base
 
     #CHECK FUNCTIONS
 
@@ -544,7 +545,13 @@ def main(page: ft.Page):
         
         games_list = base.show_games(find)
 
-        for game in games_list[begin:end]:
+
+        if end == -1 and begin == 0:
+            list_range = games_list
+        else:
+            list_range = games_list[begin:end]
+
+        for game in list_range:
             cell_tab = []
             cell_tab.append(ft.DataCell(ft.Text(game[0])))
             cell_tab.append(ft.DataCell(ft.Text(game[1])))
@@ -618,7 +625,7 @@ def main(page: ft.Page):
             actions=[
                 ft.Row(controls=[ft.TextButton("Find", on_click=lambda e:find_game(e, search_field.value, dlg_modal)), ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))]),
             ],
-            actions_alignment=ft.MainAxisAlignment.END,
+            actions_alignment=ft.MainAxisAlignment.START,
         )
         page.open(dlg_modal)
 
@@ -627,6 +634,10 @@ def main(page: ft.Page):
     def manage_database_view(list_begin, list_end, find):
         if base.exist():
             if base.show_games() != []:
+                if find==None:
+                    search_btn = ft.ElevatedButton("Search", on_click=find_menu, data=0)
+                else:
+                    search_btn = ft.OutlinedButton(f"Searched - '{find}'", on_click=lambda e:init_navbar(0, -1, None), data=0)
                 if list_begin == 0 and list_end == len(base.show_games()):
                     show_all = ft.OutlinedButton("Show less", on_click=lambda e:init_navbar(0, 50), data=0)
                 else:
@@ -635,7 +646,7 @@ def main(page: ft.Page):
                     ft.Text("Game list", style="headlineMedium"),
                     ft.Row(controls=[ft.ElevatedButton("Add game", on_click=add_game_menu, data=0),
                                      ft.ElevatedButton("Edit game list", on_click=edit_game_menu, data=0)]),
-                    ft.Row(controls=[ft.ElevatedButton("Search", on_click=find_menu, data=0),
+                    ft.Row(controls=[search_btn,
                                      ft.ElevatedButton("Filters", on_click=edit_game_menu, data=0)]),
                     ft.Row(controls=[ft.ElevatedButton("<", on_click=lambda e:move_left_game_list(list_begin, list_end), data=0),
                                      ft.Text(f"{list_begin} - {list_end}"),
@@ -767,6 +778,7 @@ def main(page: ft.Page):
        
 
     def total_game_time_table():
+        years, days, hours, minutes, seconds = stats.total_playing_time()
         return ft.DataTable(columns=[
                 ft.DataColumn(ft.Text("Total playing time:")),
                 ft.DataColumn(ft.Text("Value:"))
@@ -774,26 +786,70 @@ def main(page: ft.Page):
             rows =[
                 ft.DataRow(
                     cells=[
+                        ft.DataCell(ft.Text("Years:")),
+                        ft.DataCell(ft.Text(f"{int(years)}"))
+                    ]
+                ),
+                ft.DataRow(
+                    cells=[
                         ft.DataCell(ft.Text("Days:")),
-                        ft.DataCell(ft.Text(""))
+                        ft.DataCell(ft.Text(f"{int(days)}"))
                     ]
                 ),
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text("Hours:")),
-                        ft.DataCell(ft.Text(""))
+                        ft.DataCell(ft.Text(f"{int(hours)}"))
                     ]
                 ),
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text("Minutes:")),
-                        ft.DataCell(ft.Text(""))
+                        ft.DataCell(ft.Text(f"{int(minutes)}"))
+                    ]
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Seconds:")),
+                        ft.DataCell(ft.Text(f"{int(seconds)}"))
                     ]
                 ),
             ]
             )    
 
+    def number_of_started_games_table():
+        return ft.DataTable(columns=[
+                ft.DataColumn(ft.Text("Numer of games:")),
+                ft.DataColumn(ft.Text("Value:"))
+            ],
+            rows =[
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Started:")),
+                        ft.DataCell(ft.Text(""))
+                    ], 
+                    color="orange"
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Not Started:")),
+                        ft.DataCell(ft.Text(""))
+                    ],
+                    color="red"
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Finished:")),
+                        ft.DataCell(ft.Text(""))
+                    ],
+                    color="green"
+                ),
+            ]
+            )  
+
     def the_longest_game_time_table():
+        time, index = stats.the_longest_playing_time()
+        games = base.show_games()
         return ft.DataTable(columns=[
                 ft.DataColumn(ft.Text("The longest playing time:")),
                 ft.DataColumn(ft.Text("Value:"))
@@ -802,19 +858,21 @@ def main(page: ft.Page):
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text("Playing time:")),
-                        ft.DataCell(ft.Text(""))
+                        ft.DataCell(ft.Text(time))
                     ]
                 ),
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text("Title:")),
-                        ft.DataCell(ft.Text(""))
+                        ft.DataCell(ft.Text(games[index][1]))
                     ]
                 )
             ]
             )          
 
     def the_shortest_game_time_table():
+        time, index = stats.the_shortest_playing_time()
+        games = base.show_games()
         return ft.DataTable(columns=[
                 ft.DataColumn(ft.Text("The shortest playing time:")),
                 ft.DataColumn(ft.Text("Value:"))
@@ -823,13 +881,13 @@ def main(page: ft.Page):
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text("Playing time:")),
-                        ft.DataCell(ft.Text(""))
+                        ft.DataCell(ft.Text(time))
                     ]
                 ),
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text("Title:")),
-                        ft.DataCell(ft.Text(""))
+                        ft.DataCell(ft.Text(games[index][1]))
                     ]
                 )
             ]
@@ -845,7 +903,7 @@ def main(page: ft.Page):
                 content=ft.Column([
                         ft.Text(""),
                         ft.Text("Summaries of games database."),
-                        number_of_games_table(),
+                        ft.Row(controls=[number_of_games_table(), ft.VerticalDivider(), number_of_started_games_table()]),
                         ft.Divider(),
                         games_store_plot(),
                         ft.Divider()
@@ -854,13 +912,16 @@ def main(page: ft.Page):
                 text="Playing time",
                 content=ft.Column([
                         ft.Text("Playing time."),
+                        ft.Divider(),
                         total_game_time_table(),
+                        ft.Divider(),
                         the_longest_game_time_table(),
-                        the_shortest_game_time_table()
+                        ft.Divider(),
+                        the_shortest_game_time_table(),
+                        ft.Divider()
             ])),
             ft.Tab(
                 text="Percentage of games",
-                icon=ft.icons.SETTINGS,
                 content=ft.Column([
                         ft.Text("Playing time."),
                         total_game_time_table()])
@@ -1121,7 +1182,12 @@ def main(page: ft.Page):
         games_rows = []
         games_list = base.show_wishlist_games(find)
 
-        for game in games_list[begin:end]:
+        if end == -1 and begin == 0:
+            list_range = games_list
+        else:
+            list_range = games_list[begin:end]
+
+        for game in list_range:
             cell_tab = []
             cell_tab.append(ft.DataCell(ft.Text(game[0])))
             cell_tab.append(ft.DataCell(ft.Text(game[1])))
@@ -1149,6 +1215,10 @@ def main(page: ft.Page):
     def wishlist_view(list_begin, list_end, find):
         if base.exist():
             if base.show_games() != []:
+                if find==None:
+                    search_btn = ft.ElevatedButton("Search", on_click=find_menu, data=0)
+                else:
+                    search_btn = ft.OutlinedButton(f"Searched - '{find}'", on_click=lambda e:init_navbar(0, -1, None), data=0)
                 if list_begin == 0 and list_end == len(base.show_games()):
                     show_all = ft.OutlinedButton("Show less", on_click=lambda e:init_navbar(0, 50), data=0)
                 else:
@@ -1157,7 +1227,7 @@ def main(page: ft.Page):
                     ft.Text("Wishlist", style="headlineMedium"),
                     ft.Row(controls=[ft.ElevatedButton("Add game", on_click=add_game_to_wishlist_menu, data=0),
                                      ft.ElevatedButton("Edit wishlist", on_click=edit_wishlist_game_menu, data=0)]),
-                    ft.Row(controls=[ft.ElevatedButton("Search", on_click=find_menu, data=0),
+                    ft.Row(controls=[search_btn,
                                      ft.ElevatedButton("Filters", on_click=edit_game_menu, data=0)]),
                     ft.Row(controls=[ft.ElevatedButton("<", on_click=lambda e:move_left_game_list(list_begin, list_end), data=0),
                                      ft.Text(f"{list_begin} - {list_end}"),

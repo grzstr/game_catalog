@@ -538,13 +538,13 @@ class database():
         conn.commit()
         conn.close()
 
-    def show_games(self, find=None):
+    def show_games(self, find=None, sort=None):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
         if find == None:
             cursor.execute("SELECT * FROM games")
         else:
-            cursor.execute("SELECT * FROM games WHERE title = :title", {"title": find})
+            cursor.execute("SELECT * FROM games WHERE title LIKE :title", {"title": "%" + find + "%"})
         games = cursor.fetchall()
         conn.close()
         return games
@@ -555,7 +555,7 @@ class database():
         if find == None:
             cursor.execute("SELECT * FROM wishlist")
         else:
-            cursor.execute("SELECT * FROM wishlist WHERE title = :title", {"title": find})
+            cursor.execute("SELECT * FROM wishlist WHERE title LIKE :title", {"title": "%" + find + "%"})
         games = cursor.fetchall()
         conn.close()
         return games
