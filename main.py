@@ -540,10 +540,10 @@ def main(page: ft.Page):
         else:
             return "black"
 
-    def get_games_datatable(begin = 0, end = -1, find = None):
+    def get_games_datatable(begin = 0, end = -1, find = None, filters = None):
         games_rows = []
         
-        games_list = base.show_games(find)
+        games_list = base.show_games(find, filters)
 
 
         if end == -1 and begin == 0:
@@ -629,15 +629,255 @@ def main(page: ft.Page):
         )
         page.open(dlg_modal)
 
+    def update_dropdown(e, filter_field, chosen_filter_field):
+        options = []
+        if filter_field.value == 'Status':
+            options = ['Finished', 'Started', 'Not started']
+        elif filter_field.value == 'Platform':
+            for option in base.show_platform():
+                options.append(option[1]) 
+        elif filter_field.value == 'Games store':
+            for option in base.show_games_store():
+                options.append(option[1]) 
+        elif filter_field.value == 'Subscription':
+            for option in base.show_subscription():
+                options.append(option[1]) 
+        elif filter_field.value == 'Box':
+            options = ['Yes', 'No']
+        elif filter_field.value == 'Paid':
+            options = ['Yes', 'No']
+        elif filter_field.value == 'Publisher':
+            for option in base.show_publisher():
+                options.append(option[1]) 
+        elif filter_field.value == 'Developer':
+            for option in base.show_developer():
+                options.append(option[1]) 
+        elif filter_field.value == 'Series':
+            for option in base.show_series():
+                options.append(option[1]) 
+        else:
+            options = []
+
+        chosen_filter_field.options.clear()
+        for option in options:
+            chosen_filter_field.options.append(ft.dropdown.Option(option))
+
+        page.update(filter_field)
+        page.update(chosen_filter_field)
+
+    def set_sort(dlg_modal, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12):
+        filters = ""
+        if c1.value == True:
+            if filters != "":
+                filters += ","
+            filters += "number_of_copies "
+        if c2.value == True:
+            if filters != "":
+                filters += ","
+            filters += "game_time "
+        if c3.value == True:
+            if filters != "":
+                filters += ","
+            filters += "status_id "
+        if c4.value == True:
+            if filters != "":
+                filters += ","
+            filters += "platform_id "
+        if c5.value == True:
+            if filters != "":
+                filters += ","
+            filters += "games_store_id "
+        if c6.value == True:
+            if filters != "":
+                filters += ","
+            filters += "subscription_id "
+        if c7.value == True:
+            if filters != "":
+                filters += ","
+            filters += "box "
+        if c8.value == True:
+            if filters != "":
+                filters += ","
+            filters += "paid "
+        if c9.value == True:
+            if filters != "":
+                filters += ","
+            filters += "publisher_id "
+        if c10.value == True:
+            if filters != "":
+                filters += ","
+            filters += "developer_id "
+        if c11.value == True:
+            if filters != "":
+                filters += ","
+            filters += "series_id "
+        if c12.value == True:
+            if filters != "":
+                filters += ","
+            filters += "title "
+
+        page.close(dlg_modal)
+        init_navbar(0, -1, None, filters)
+
+    def set_show(dlg_modal, filter, chosen_filter):
+        if filter == "Status":
+            filters = f"status_id = {base.get_status_id(chosen_filter)}"
+        elif filter == "Platform":
+            filters = f"platform_id = {base.get_platform_id(chosen_filter)}"
+        elif filter == "Games store":
+            filters = f"games_store_id = {base.get_games_store_id(chosen_filter)}"
+        elif filter == "Subscription":
+            filters = f"subscription_id = {base.get_subscription_id(chosen_filter)}"
+        elif filter == "Box":
+            filters = f"box = {base.convert_yes_no(chosen_filter)}"
+        elif filter == "Paid":
+            filters = f"paid = {base.convert_yes_no(chosen_filter)}"
+        elif filter == "Publisher":
+            filters = f"publisher_id = {base.get_publisher_id(chosen_filter)}"
+        elif filter == "Developer":
+            filters = f"developer_id = {base.get_developer_id(chosen_filter)}"
+        elif filter == "Series":
+            filters = f"series_id = {base.get_series_id(chosen_filter)}"
+        page.close(dlg_modal)
+        init_navbar(0, -1, None, filters)
+
+    def filter_menu(e):
+        c12 = ft.Checkbox(label="Title", value=False)
+        c1 = ft.Checkbox(label="Number of copies", value=False)
+        c2 = ft.Checkbox(label="Game time", value=False)
+        c3 = ft.Checkbox(label="Status", value=False)
+        c4 = ft.Checkbox(label="Platform", value=False)
+        c5 = ft.Checkbox(label="Games store", value=False)
+        c6 = ft.Checkbox(label="Subscription", value=False)
+        c7 = ft.Checkbox(label="Box", value=False)
+        c8 = ft.Checkbox(label="Paid", value=False)
+        c9 = ft.Checkbox(label="Publisher", value=False)
+        c10 = ft.Checkbox(label="Developer", value=False)
+        c11 = ft.Checkbox(label="Series", value=False)
+
+        chosen_filter_field = ft.Dropdown(label="Choose:")
+        filter_field = ft.Dropdown(label="Choose atribute:", on_change=lambda e:update_dropdown(e, filter_field, chosen_filter_field))
+        for filter in ['Status', 'Platform', 'Games store', 'Subscription', 'Box', 'Paid', 'Publisher', 'Developer', 'Series']:
+            filter_field.options.append(ft.dropdown.Option(filter))
+        
+
+        check = ft.Column([])
+        dlg_modal = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("List filters"),
+            content=ft.Tabs(
+                    selected_index=0,
+                    animation_duration=300,
+                    tabs=[
+                        ft.Tab(
+                            text="Sort by",
+                            content=ft.Column([c12, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11,
+                                               ft.Row(controls=[ft.TextButton("Set filters", on_click=lambda e:set_sort(dlg_modal, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12)), 
+                                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))])])),
+
+                        ft.Tab(
+                            text="Show only",
+                            content=ft.Column([filter_field, 
+                                               chosen_filter_field,
+                                               ft.Row(controls=[ft.TextButton("Set filters", on_click=lambda e:set_show(dlg_modal, filter_field.value, chosen_filter_field.value)), 
+                                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))])])),
+                    ],
+                    expand=True,
+                    scrollable=True,
+                ),
+            scrollable=True,
+            actions_alignment=ft.MainAxisAlignment.START,
+        )
+        page.open(dlg_modal)
+
+    def set_wishlist_sort(dlg_modal, c4, c9, c10, c12):
+        filters = ""
+        if c4.value == True:
+            if filters != "":
+                filters += ","
+            filters += "platform_id "
+        if c9.value == True:
+            if filters != "":
+                filters += ","
+            filters += "publisher_id "
+        if c10.value == True:
+            if filters != "":
+                filters += ","
+            filters += "developer_id "
+        if c12.value == True:
+            if filters != "":
+                filters += ","
+            filters += "title "
+
+        page.close(dlg_modal)
+        init_navbar(0, -1, None, filters)
+
+    def set_wishlist_show(dlg_modal, filter, chosen_filter):
+        if filter == "Platform":
+            filters = f"platform_id = {base.get_platform_id(chosen_filter)}"
+        elif filter == "Publisher":
+            filters = f"publisher_id = {base.get_publisher_id(chosen_filter)}"
+        elif filter == "Developer":
+            filters = f"developer_id = {base.get_developer_id(chosen_filter)}"
+        page.close(dlg_modal)
+        init_navbar(0, -1, None, filters)
+
+    def filter_wishlist_menu(e):
+        c12 = ft.Checkbox(label="Title", value=False)
+        c4 = ft.Checkbox(label="Platform", value=False)
+        c9 = ft.Checkbox(label="Publisher", value=False)
+        c10 = ft.Checkbox(label="Developer", value=False)
+
+        chosen_filter_field = ft.Dropdown(label="Choose:")
+        filter_field = ft.Dropdown(label="Choose atribute:", on_change=lambda e:update_dropdown(e, filter_field, chosen_filter_field))
+        for filter in ['Platform', 'Publisher', 'Developer']:
+            filter_field.options.append(ft.dropdown.Option(filter))
+        
+
+        check = ft.Column([])
+        dlg_modal = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("List filters"),
+            content=ft.Tabs(
+                    selected_index=0,
+                    animation_duration=300,
+                    tabs=[
+                        ft.Tab(
+                            text="Sort by",
+                            content=ft.Column([c12, c4, c9, c10,
+                                               ft.Row(controls=[ft.TextButton("Set filters", on_click=lambda e:set_wishlist_sort(dlg_modal, c4, c9, c10, c12)), 
+                                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))])])),
+
+                        ft.Tab(
+                            text="Show only",
+                            content=ft.Column([filter_field, 
+                                               chosen_filter_field,
+                                               ft.Row(controls=[ft.TextButton("Set filters", on_click=lambda e:set_wishlist_show(dlg_modal, filter_field.value, chosen_filter_field.value)), 
+                                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))])])),
+                    ],
+                    expand=True,
+                    scrollable=True,
+                ),
+            scrollable=True,
+            actions_alignment=ft.MainAxisAlignment.START,
+        )
+        page.open(dlg_modal)
+
+
     ### NAVIGATION MENU
 
-    def manage_database_view(list_begin, list_end, find):
+    def manage_database_view(list_begin, list_end, find, filters):
         if base.exist():
             if base.show_games() != []:
                 if find==None:
                     search_btn = ft.ElevatedButton("Search", on_click=find_menu, data=0)
                 else:
-                    search_btn = ft.OutlinedButton(f"Searched - '{find}'", on_click=lambda e:init_navbar(0, -1, None), data=0)
+                    search_btn = ft.OutlinedButton(f"Searched - '{find}'", on_click=lambda e:init_navbar(0, -1, None, filters), data=0)
+                if filters == None:
+                    filters_btn = ft.ElevatedButton("Filters", on_click=filter_menu, data=0)
+                else:
+                    filters_btn = ft.OutlinedButton(f"Filtered - '{filters}'", on_click=lambda e:init_navbar(0, -1, find, None), data=0)
+
                 if list_begin == 0 and list_end == len(base.show_games()):
                     show_all = ft.OutlinedButton("Show less", on_click=lambda e:init_navbar(0, 50), data=0)
                 else:
@@ -647,13 +887,13 @@ def main(page: ft.Page):
                     ft.Row(controls=[ft.ElevatedButton("Add game", on_click=add_game_menu, data=0),
                                      ft.ElevatedButton("Edit game list", on_click=edit_game_menu, data=0)]),
                     ft.Row(controls=[search_btn,
-                                     ft.ElevatedButton("Filters", on_click=edit_game_menu, data=0)]),
+                                     filters_btn]),
                     ft.Row(controls=[ft.ElevatedButton("<", on_click=lambda e:move_left_game_list(list_begin, list_end), data=0),
                                      ft.Text(f"{list_begin} - {list_end}"),
                                      ft.ElevatedButton(">", on_click=lambda e:move_right_game_list(list_begin, list_end), data=0),
                                      show_all]),
                     ft.Divider(),
-                    get_games_datatable(list_begin, list_end, find),
+                    get_games_datatable(list_begin, list_end, find, filters),
                     ft.Divider()
                     ], scroll=ft.ScrollMode.AUTO, expand=True)
             else:
@@ -1178,9 +1418,9 @@ def main(page: ft.Page):
                                   ft.ElevatedButton("Move to game list", on_click=lambda e:move_game_menu(e, games.value)), 
                                   ft.ElevatedButton("Back", on_click=lambda e:main(page))]))
 
-    def get_wishlist_games_datatable(begin = 0, end = -1, find=None):
+    def get_wishlist_games_datatable(begin = 0, end = -1, find=None, filters=None):
         games_rows = []
-        games_list = base.show_wishlist_games(find)
+        games_list = base.show_wishlist_games(find, filters)
 
         if end == -1 and begin == 0:
             list_range = games_list
@@ -1212,29 +1452,35 @@ def main(page: ft.Page):
     
         return ft.Column([table], scroll=ft.ScrollMode.AUTO, expand=True)
 
-    def wishlist_view(list_begin, list_end, find):
+    def wishlist_view(list_begin, list_end, find, filters):
         if base.exist():
             if base.show_games() != []:
                 if find==None:
                     search_btn = ft.ElevatedButton("Search", on_click=find_menu, data=0)
                 else:
                     search_btn = ft.OutlinedButton(f"Searched - '{find}'", on_click=lambda e:init_navbar(0, -1, None), data=0)
+                if filters == None:
+                    filters_btn = ft.ElevatedButton("Filters", on_click=filter_wishlist_menu, data=0)
+                else:
+                    filters_btn = ft.OutlinedButton(f"Filtered - '{filters}'", on_click=lambda e:init_navbar(0, -1, find, None), data=0)
+
                 if list_begin == 0 and list_end == len(base.show_games()):
                     show_all = ft.OutlinedButton("Show less", on_click=lambda e:init_navbar(0, 50), data=0)
                 else:
                     show_all = ft.ElevatedButton("Show all", on_click=lambda e:init_navbar(0, len(base.show_games())), data=0)
+
                 return ft.Column([
                     ft.Text("Wishlist", style="headlineMedium"),
                     ft.Row(controls=[ft.ElevatedButton("Add game", on_click=add_game_to_wishlist_menu, data=0),
                                      ft.ElevatedButton("Edit wishlist", on_click=edit_wishlist_game_menu, data=0)]),
                     ft.Row(controls=[search_btn,
-                                     ft.ElevatedButton("Filters", on_click=edit_game_menu, data=0)]),
+                                     filters_btn]),
                     ft.Row(controls=[ft.ElevatedButton("<", on_click=lambda e:move_left_game_list(list_begin, list_end), data=0),
                                      ft.Text(f"{list_begin} - {list_end}"),
                                      ft.ElevatedButton(">", on_click=lambda e:move_right_game_list(list_begin, list_end), data=0),
                                      show_all]),
                     ft.Divider(),
-                    get_wishlist_games_datatable(list_begin, list_end, find),
+                    get_wishlist_games_datatable(list_begin, list_end, find, filters),
                     ft.Divider()
                     ], scroll=ft.ScrollMode.AUTO, expand=True)
             else:
@@ -1265,21 +1511,19 @@ def main(page: ft.Page):
 
         ])
 
-    # Funkcja obsługująca zmianę zakładki
-    def on_tab_change(event, list_begin, list_end, find):
+    def on_tab_change(event, list_begin, list_end, find, filters):
         if event.control.selected_index == 0:
-            page.controls[1].content = manage_database_view(list_begin, list_end, find)
+            page.controls[1].content = manage_database_view(list_begin, list_end, find, filters)
         elif event.control.selected_index == 1:
-            page.controls[1].content = wishlist_view(list_begin, list_end, find)
+            page.controls[1].content = wishlist_view(list_begin, list_end, find, filters)
         elif event.control.selected_index == 2:
             page.controls[1].content = statistics_view()
         elif event.control.selected_index == 3:
             page.controls[1].content = settings_view()
         page.update()
 
-    def init_navbar(list_begin, list_end, find=None):
+    def init_navbar(list_begin, list_end, find=None, filters=None):
         page.clean()
-        # Tworzymy pasek nawigacji
         nav_bar = ft.NavigationBar(
             destinations=[
                 ft.NavigationBarDestination(icon=ft.icons.EXPLORE, label="Game list"),
@@ -1287,11 +1531,10 @@ def main(page: ft.Page):
                 ft.NavigationBarDestination(icon=ft.icons.COMMUTE, label="Statistics"),
                 ft.NavigationBarDestination(icon=ft.icons.SETTINGS, label="Settings"),
             ],
-            on_change=lambda e:on_tab_change(e, list_begin, list_end, find),
+            on_change=lambda e:on_tab_change(e, list_begin, list_end, find, filters),
         )
 
-        # Dodajemy pasek nawigacji i początkowy widok
-        page.add(nav_bar, ft.Container(content=manage_database_view(list_begin, list_end, find), expand=True))
+        page.add(nav_bar, ft.Container(content=manage_database_view(list_begin, list_end, find, filters), expand=True))
         
     init_navbar(list_begin=0, list_end=50)
 

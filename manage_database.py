@@ -151,6 +151,20 @@ class database():
         conn.commit()
         conn.close()
 
+    def convert_yes_no(self, answer):
+        if answer == "Yes" or answer == "yes":
+            return 1
+        else:
+            return 0
+
+    def get_status_id(self, status_name):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM status WHERE status_name = :status_name", {"status_name": status_name})
+        status_id = cursor.fetchone()
+        conn.close()
+        return status_id[0]  
+
     def get_platform_id(self, platform):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
@@ -275,7 +289,7 @@ class database():
         cursor.execute("SELECT publisher_name FROM publisher WHERE id = :publisher_id", {"publisher_id": id})
         publisher_name = cursor.fetchone()
         conn.close()
-        return publisher_name[0]    
+        return publisher_name[0]
 
     def get_developer_name(self, id):
         conn = sqlite3.connect(self.database_name)
@@ -541,25 +555,60 @@ class database():
     def show_games(self, find=None, sort=None):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        if find == None:
-            cursor.execute("SELECT * FROM games")
-        else:
-            cursor.execute("SELECT * FROM games WHERE title LIKE :title", {"title": "%" + find + "%"})
-        games = cursor.fetchall()
-        conn.close()
-        return games
-    
-    def show_wishlist_games(self, find=None):
-        conn = sqlite3.connect(self.database_name)
-        cursor = conn.cursor()
-        if find == None:
-            cursor.execute("SELECT * FROM wishlist")
-        else:
-            cursor.execute("SELECT * FROM wishlist WHERE title LIKE :title", {"title": "%" + find + "%"})
+
+        command = "SELECT * FROM games"
+        if find != None:
+            command += f" WHERE title LIKE '%{find}%'"
+        
+        if sort != None:
+            if "=" in sort:
+                if find == None:
+                    command += f" WHERE {sort}"
+                else:
+                    command += f" AND {sort}"
+        
+        if sort != None and "=" not in sort:
+            command += f" ORDER BY {sort}"
+
+        cursor.execute(command)    
         games = cursor.fetchall()
         conn.close()
         return games
 
+    def check_wishlist_atribute(self, sort):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(wishlist)")     
+        columns_info = cursor.fetchall()
+        column_names = [column[1] for column in columns_info]
+        if sort[:-1] in column_names:
+            return True
+        else:
+            return False
+
+    def show_wishlist_games(self, find=None, sort=None):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+
+        command = "SELECT * FROM wishlist"
+        if find != None:
+            command += f" WHERE title LIKE '%{find}%'"
+        
+        if sort != None:
+            if "=" in sort and self.check_wishlist_atribute(sort.split("=")[0]):
+                if find == None:
+                    command += f" WHERE {sort}"
+                else:
+                    command += f" AND {sort}"
+        
+        if sort != None and "=" not in sort:
+            command += f" ORDER BY {sort}"
+
+        cursor.execute(command)    
+        games = cursor.fetchall()
+        conn.close()
+        return games
+    
     def show_owned_games(self):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
