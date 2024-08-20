@@ -912,12 +912,189 @@ def main(page: ft.Page):
     # STATISTICS VIEW
     # ***************
 
+    def sort_games_stores(games_by_games_store):
+        games_stores = base.show_games_store()
+        games_store_dict = {}
+        for games_store in games_stores:
+            if len(games_store[1])>1 and games_store[1] != "Other" and games_store[1] != "None":
+                if games_store[1] not in games_store_dict and "/" not in games_store[1]:
+                    games_store_dict[games_store[1]] = len(games_by_games_store(games_store[1]))
+                else:
+                    games_store_list = games_store[1].split("/")
+                    for splited_games_store in games_store_list:
+                        if splited_games_store not in games_store_dict:
+                            games_store_dict[splited_games_store] = len(games_by_games_store(games_store[1]))
+                        else:
+                            games_store_dict[splited_games_store] += len(games_by_games_store(games_store[1]))
+
+        return games_store_dict
+
+    # CHARTS
+
+    def games_store_plot():
+        bar_groups = []
+        labels = []
+
+        purchased_games = sort_games_stores(base.show_purchased_games_by_games_store)
+        free_games = sort_games_stores(base.show_free_games_by_games_store)
+
+        max_value = 0
+        i = 0
+        for games_store in purchased_games:
+            bar_groups.append(ft.BarChartGroup(x=i, bar_rods=[ft.BarChartRod(from_y=0,to_y=purchased_games[games_store],color="blue"),
+                                                            ft.BarChartRod(from_y=0,to_y=free_games[games_store],color="red")]))
+            store = games_store.split(" ")
+            label_store = ""
+            for word in store:
+                label_store += word + "\n"
+            labels.append(ft.ChartAxisLabel(value=i, label=ft.Container(ft.Text(label_store, text_align=ft.TextAlign.CENTER), padding=1)))
+            i += 1
+
+            if max_value < max([purchased_games[games_store], free_games[games_store]]):
+                max_value = max([purchased_games[games_store], free_games[games_store]])
+
+        games_store_plot = ft.BarChart(
+            bar_groups=bar_groups,
+            border=ft.border.all(1, ft.colors.GREY_400),
+            left_axis=ft.ChartAxis(
+                labels_size=40, title=ft.Text("Value"), title_size=40
+            ),
+            bottom_axis=ft.ChartAxis(labels=labels, labels_size=80, title=ft.Text("Games stores"), show_labels=True),
+            horizontal_grid_lines=ft.ChartGridLines(
+                color=ft.colors.GREY_300, width=1, dash_pattern=[3, 3]
+            ),
+            tooltip_bgcolor=ft.colors.with_opacity(0.5, ft.colors.GREY_300),
+            max_y=max_value + 10,
+            min_y=0,
+            interactive=True,
+            expand=False,
+        )
+
+        legend = ft.Row(
+            [
+                ft.Container(
+                    content=ft.Row([
+                        ft.Container(width=20, height=20, bgcolor="blue"),
+                        ft.Text("Purchased Games")
+                    ], spacing=5),
+                    padding=ft.padding.all(10)
+                ),
+                ft.Container(
+                    content=ft.Row([
+                        ft.Container(width=20, height=20, bgcolor="red"),
+                        ft.Text("Free Games")
+                    ], spacing=5),
+                    padding=ft.padding.all(10)
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER
+        )
+
+        return ft.Column(
+            [
+                ft.Text("Summary of purchased and free games by games stores", text_align=ft.TextAlign.CENTER, size=20),
+                legend,
+                games_store_plot
+            ]
+        )
+
+    def total_games_plot():
+        bar_groups = []
+        labels = []
+        
+        total_games_chart = []
+        total_number_of_games = len(base.show_games())
+        max_value = 0
+
+        i = 0
+        for attribute in ["Owned", "Subscripted", "Digital", "CD-Action", "Box + CD-Action", "Box", "Free", "Purchased"]:
+            total, finished, not_started, started = stats.total_games_summary(attribute)
+            bar_groups.append(ft.BarChartGroup(x=i, bar_rods=[ft.BarChartRod(from_y=0,to_y=finished, color="green"),
+                                                              ft.BarChartRod(from_y=0,to_y=started, color="orange"),
+                                                              ft.BarChartRod(from_y=0,to_y=not_started, color="red")]))
+            labels.append(ft.ChartAxisLabel(value=i, label=ft.Container(ft.Text(attribute, text_align=ft.TextAlign.CENTER), padding=1)))
+            i+=1
+
+            if max_value < max([finished, not_started, started]):
+                max_value = max([finished, not_started, started])
+
+        total_plot = ft.BarChart(
+            bar_groups= bar_groups,
+            border=ft.border.all(1, ft.colors.GREY_400),
+            left_axis=ft.ChartAxis(
+                labels_size=40, title=ft.Text("Value"), title_size=40
+            ),
+            bottom_axis=ft.ChartAxis(labels = labels, labels_size=80, title=ft.Text("Attributes"), show_labels=True),
+            horizontal_grid_lines=ft.ChartGridLines(
+                color=ft.colors.GREY_300, width=1, dash_pattern=[3, 3]
+            ),
+            tooltip_bgcolor=ft.colors.with_opacity(0.5, ft.colors.GREY_300),
+            max_y=max_value + 10,
+            min_y=0,
+            interactive=True,
+            expand=False,
+        )
+
+        legend = ft.Row(
+            [
+                ft.Container(
+                    content=ft.Row([
+                        ft.Container(width=20, height=20, bgcolor="green"),
+                        ft.Text("Finished Games")
+                    ], spacing=5),
+                    padding=ft.padding.all(10)
+                ),
+                ft.Container(
+                    content=ft.Row([
+                        ft.Container(width=20, height=20, bgcolor="orange"),
+                        ft.Text("Started Games")
+                    ], spacing=5),
+                    padding=ft.padding.all(10)
+                ),
+                ft.Container(
+                    content=ft.Row([
+                        ft.Container(width=20, height=20, bgcolor="red"),
+                        ft.Text("Not Started Games")
+                    ], spacing=5),
+                    padding=ft.padding.all(10)
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER
+        )
+        
+        return ft.Column([ft.Text("Summary of games by games status", text_align=ft.TextAlign.CENTER, size = 20),
+                          legend,
+                          total_plot])
+
+    # DATA TABLES
+
     def number_of_games_table():
         return ft.DataTable(columns=[
                 ft.DataColumn(ft.Text("Number of games:")),
                 ft.DataColumn(ft.Text("Value:"))
             ],
             rows =[
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Started:")),
+                        ft.DataCell(ft.Text(f"{len(base.show_games(sort=f"status_id = {base.get_status_id("Started")}"))}"))
+                    ], 
+                    #color="orange"
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Not Started:")),
+                        ft.DataCell(ft.Text(f"{len(base.show_games(sort=f"status_id = {base.get_status_id("Not started")}"))}"))
+                    ],
+                    #color="red"
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Finished:")),
+                        ft.DataCell(ft.Text(f"{len(base.show_games(sort=f"status_id = {base.get_status_id("Finished")}"))}"))
+                    ],
+                    #color="green"
+                ),
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text("Total")),
@@ -964,59 +1141,6 @@ def main(page: ft.Page):
 
             )
 
-    def sort_games_stores(games_by_games_store):
-        games_stores = base.show_games_store()
-        games_store_dict = {}
-        for games_store in games_stores:
-            if len(games_store[1])>1 and games_store[1] != "Other" and games_store[1] != "None":
-                if games_store[1] not in games_store_dict and "/" not in games_store[1]:
-                    games_store_dict[games_store[1]] = len(games_by_games_store(games_store[1]))
-                else:
-                    games_store_list = games_store[1].split("/")
-                    for splited_games_store in games_store_list:
-                        if splited_games_store not in games_store_dict:
-                            games_store_dict[splited_games_store] = len(games_by_games_store(games_store[1]))
-                        else:
-                            games_store_dict[splited_games_store] += len(games_by_games_store(games_store[1]))
-
-        return games_store_dict
-
-    def games_store_plot():
-        bar_groups = []
-        labels = []
-
-        purchased_games = sort_games_stores(base.show_purchased_games_by_games_store)
-        free_games = sort_games_stores(base.show_free_games_by_games_store)
-
-        i = 0
-        for games_store in purchased_games:
-            bar_groups.append(ft.BarChartGroup(x=i, bar_rods=[ft.BarChartRod(from_y=0,to_y=purchased_games[games_store],color="blue"),
-                                                                          ft.BarChartRod(from_y=0,to_y=free_games[games_store],color="red")]))
-            store = games_store.split(" ")
-            label_store = ""
-            for word in store:
-                label_store+= word + "\n" 
-            labels.append(ft.ChartAxisLabel(value=i, label=ft.Container(ft.Text(label_store, text_align=ft.TextAlign.CENTER), padding=1)))
-            i+=1
-
-        return ft.BarChart(
-            bar_groups= bar_groups,
-            border=ft.border.all(1, ft.colors.GREY_400),
-            left_axis=ft.ChartAxis(
-                labels_size=40, title=ft.Text("Value"), title_size=40
-            ),
-            bottom_axis=ft.ChartAxis(labels = labels, labels_size=80, title=ft.Text("Games stores")),
-            horizontal_grid_lines=ft.ChartGridLines(
-                color=ft.colors.GREY_300, width=1, dash_pattern=[3, 3]
-            ),
-            tooltip_bgcolor=ft.colors.with_opacity(0.5, ft.colors.GREY_300),
-            max_y=110,
-            min_y=0,
-            interactive=True,
-            expand=False,
-        )
-       
-
     def total_game_time_table():
         years, days, hours, minutes, seconds = stats.total_playing_time()
         return ft.DataTable(columns=[
@@ -1056,36 +1180,6 @@ def main(page: ft.Page):
                 ),
             ]
             )    
-
-    def number_of_started_games_table():
-        return ft.DataTable(columns=[
-                ft.DataColumn(ft.Text("Numer of games:")),
-                ft.DataColumn(ft.Text("Value:"))
-            ],
-            rows =[
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text("Started:")),
-                        ft.DataCell(ft.Text(""))
-                    ], 
-                    color="orange"
-                ),
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text("Not Started:")),
-                        ft.DataCell(ft.Text(""))
-                    ],
-                    color="red"
-                ),
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text("Finished:")),
-                        ft.DataCell(ft.Text(""))
-                    ],
-                    color="green"
-                ),
-            ]
-            )  
 
     def the_longest_game_time_table():
         time, index = stats.the_longest_playing_time()
@@ -1133,6 +1227,71 @@ def main(page: ft.Page):
             ]
             )     
 
+    def total_games_summary():
+        total_games_table = []
+        total_number_of_games = len(base.show_games())
+        for atribute in ["Owned", "Subscripted", "Digital", "CD-Action", "Box + CD-Action", "Box", "Free", "Purchased"]:
+            total, finished, not_started, started = stats.total_games_summary(atribute)
+            total_games_table.append(ft.Column([
+                                ft.Text(atribute, text_align=ft.TextAlign.CENTER, size = 20),
+                                ft.DataTable(
+                                    columns=[
+                                        ft.DataColumn(ft.Text("")),
+                                        ft.DataColumn(ft.Text("Value:")),
+                                        ft.DataColumn(ft.Text("Precentage:"), numeric=True),
+                                    ],
+                                    rows=[
+                                        ft.DataRow(
+                                            cells=[
+                                                ft.DataCell(ft.Text("Finished")),
+                                                ft.DataCell(ft.Text(finished)),
+                                                ft.DataCell(ft.Text(f"{round((finished/total)*100, 2)}%")),
+                                            ], color = "green"
+                                        ),
+                                        ft.DataRow(
+                                            cells=[
+                                                ft.DataCell(ft.Text("(In relation to the total number of games)")),
+                                                ft.DataCell(ft.Text("-")),
+                                                ft.DataCell(ft.Text(f"{round((finished/total_number_of_games)*100, 2)}%")),
+                                            ], color = "green"
+                                        ),
+                                        ft.DataRow(
+                                            cells=[
+                                                ft.DataCell(ft.Text("Started")),
+                                                ft.DataCell(ft.Text(started)),
+                                                ft.DataCell(ft.Text(f"{round((started/total)*100, 2)}%")),
+                                            ], color = "orange",
+                                        ),
+                                        ft.DataRow(
+                                            cells=[
+                                                ft.DataCell(ft.Text("(In relation to the total number of games)")),
+                                                ft.DataCell(ft.Text("-")),
+                                                ft.DataCell(ft.Text(f"{round((started/total_number_of_games)*100, 2)}%")),
+                                            ], color = "orange",
+                                        ),
+                                        ft.DataRow(
+                                            cells=[
+                                                ft.DataCell(ft.Text("Not started")),
+                                                ft.DataCell(ft.Text(not_started)),
+                                                ft.DataCell(ft.Text(f"{round((not_started/total)*100, 2)}%")),                   
+                                            ], color = "red",
+                                        ),
+                                        ft.DataRow(
+                                            cells=[
+                                                ft.DataCell(ft.Text("(In relation to the total number of games)")),
+                                                ft.DataCell(ft.Text("-")),
+                                                ft.DataCell(ft.Text(f"{round((not_started/total_number_of_games)*100, 2)}%")),                   
+                                            ], color = "red",
+                                        ),
+                                    ],
+                                ),
+                            ])
+                        )
+            total_games_table.append(ft.Divider())
+
+        return ft.Column(total_games_table)
+ 
+
     def statistics_tabs():          
             return ft.Tabs(
             selected_index=0,
@@ -1143,10 +1302,13 @@ def main(page: ft.Page):
                 content=ft.Column([
                         ft.Text(""),
                         ft.Text("Summaries of games database."),
-                        ft.Row(controls=[number_of_games_table(), ft.VerticalDivider(), number_of_started_games_table()]),
+                        number_of_games_table(),
                         ft.Divider(),
                         games_store_plot(),
-                        ft.Divider()
+                        ft.Divider(),
+                        total_games_plot(),
+                        ft.Divider(), 
+                        total_games_summary()
             ])),
             ft.Tab(
                 text="Playing time",
@@ -1160,12 +1322,6 @@ def main(page: ft.Page):
                         the_shortest_game_time_table(),
                         ft.Divider()
             ])),
-            ft.Tab(
-                text="Percentage of games",
-                content=ft.Column([
-                        ft.Text("Playing time."),
-                        total_game_time_table()])
-            ),
         ],
         expand=True,
     )

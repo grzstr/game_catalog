@@ -108,7 +108,7 @@ def convert_subscription(xbox, ea, ubisoft):
         if subscription != "":
             subscription += "/"
         subscription += "Ubisoft+"
-    if subscription >= "":
+    if subscription == "":
         return "None"
     
     return subscription

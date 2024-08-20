@@ -191,7 +191,7 @@ class database():
         conn.close()
         return games_store_id[0]
 
-    def get_subscription_id(self, subscription, games_store_id):
+    def get_subscription_id(self, subscription, games_store_id=1):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM subscription WHERE subscription_name = :subscription", {"subscription": subscription})
@@ -609,26 +609,35 @@ class database():
         conn.close()
         return games
     
-    def show_owned_games(self):
+    def show_owned_games(self, status = None):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM games WHERE subscription_id = :subscription_id", {"subscription_id": self.get_subscription_id("None", self.get_games_store_id("Other"))})
+        command = f"SELECT * FROM games WHERE subscription_id = {self.get_subscription_id("None", self.get_games_store_id("Other"))}"
+        if status != None:
+            command += f" AND status_id = {self.get_status_id(status)}"
+        cursor.execute(command)
         games = cursor.fetchall()
         conn.close()
         return games
     
-    def show_subscription_games(self):
+    def show_subscription_games(self, status = None):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM games WHERE NOT subscription_id = :subscription_id", {"subscription_id": self.get_subscription_id("None", self.get_games_store_id("Other"))})
+        command = f"SELECT * FROM games WHERE subscription_id <> {self.get_subscription_id("None", self.get_games_store_id("Other"))}"
+        if status != None:
+            command += f" AND status_id = {self.get_status_id(status)}"
+        cursor.execute(command)
         games = cursor.fetchall()
         conn.close()
         return games
 
-    def show_purchased_games(self):
+    def show_purchased_games(self, status = None):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM games WHERE paid = :paid", {"paid": 1})
+        command = f"SELECT * FROM games WHERE paid = 1"
+        if status != None:
+            command += f" AND status_id = {self.get_status_id(status)}"
+        cursor.execute(command)
         games = cursor.fetchall()
         conn.close()
         return games
@@ -651,26 +660,47 @@ class database():
         conn.close()
         return games
 
-    def show_free_games(self):
+    def show_free_games(self, status = None):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM games WHERE paid = :paid", {"paid": 0})
+        command = "SELECT * FROM games WHERE paid = 0"
+        if status != None:
+            command += f" AND status_id = {self.get_status_id(status)}"
+        cursor.execute(command)
         games = cursor.fetchall()
         conn.close()
         return games
 
-    def show_box_games(self):
+    def show_games_store_games(self, games_store, status = None):
+        games_store_id = self.get_games_store_id(games_store)
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM games WHERE box = :box", {"box": 1})
+        command = f"SELECT * FROM games WHERE games_store_id = {games_store_id}"
+        if status != None:
+            command += f" AND status_id = {self.get_status_id(status)}"
+        cursor.execute(command)
         games = cursor.fetchall()
         conn.close()
         return games
 
-    def show_digital_games(self):
+    def show_box_games(self, status = None):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM games WHERE box = :box", {"box": 0})
+        command = "SELECT * FROM games WHERE box = 1"
+        if status != None:
+            command += f" AND status_id = {self.get_status_id(status)}"
+        cursor.execute(command)
+        games = cursor.fetchall()
+        conn.close()
+        return games
+
+    def show_digital_games(self, status = None):
+        conn = sqlite3.connect(self.database_name)
+        cursor = conn.cursor()
+        command = "SELECT * FROM games WHERE box = 0"
+        if status != None:
+            command += f" AND status_id = {self.get_status_id(status)}"
+        cursor.execute(command)
         games = cursor.fetchall()
         conn.close()
         return games

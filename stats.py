@@ -77,12 +77,65 @@ class games_stats():
     
     def the_shortest_playing_time(self):
         games_time = self.get_games_time()
-        min_value = min(games_time)
+
+        sorted_time = []
+        for time in games_time:
+            if time != 0:
+                sorted_time.append(time)
+        if sorted_time == []:
+            sorted_time.append(0)
+
+        min_value = min(sorted_time)
         min_index = games_time.index(min_value)
         time = self.convert_time_to_string(min_value)
         
         return time, min_index
 
-    def get_started_games(self):
-        games = self.base.show_games()
-        pass
+    def total_games_summary(self, atribute):
+        if atribute == "Owned":
+            total = len(self.base.show_owned_games())
+            finished = len(self.base.show_owned_games("Finished"))
+            not_started = len(self.base.show_owned_games("Not started"))
+            started = len(self.base.show_owned_games("Started"))
+        elif atribute == "Subscripted":
+            total = len(self.base.show_subscription_games())
+            finished = len(self.base.show_subscription_games("Finished"))
+            not_started = len(self.base.show_subscription_games("Not started"))
+            started = len(self.base.show_subscription_games("Started"))
+        elif atribute == "Digital":
+            total = len(self.base.show_digital_games())
+            finished = len(self.base.show_digital_games("Finished"))
+            not_started = len(self.base.show_digital_games("Not started"))
+            started = len(self.base.show_digital_games("Started"))
+        elif atribute == "CD-Action":
+            total = len(self.base.show_games_store_games("CD-Action"))
+            finished = len(self.base.show_games_store_games("CD-Action", "Finished"))
+            not_started = len(self.base.show_games_store_games("CD-Action", "Not started"))
+            started = len(self.base.show_games_store_games("CD-Action", "Started"))
+        elif atribute == "Box + CD-Action":
+            total = len(self.base.show_games_store_games("CD-Action")) + len(self.base.show_box_games())
+            finished = len(self.base.show_games_store_games("CD-Action", "Finished")) + len(self.base.show_box_games("Finished"))
+            not_started = len(self.base.show_games_store_games("CD-Action", "Not started")) + len(self.base.show_box_games("Not started"))
+            started = len(self.base.show_games_store_games("CD-Action", "Started")) + len(self.base.show_box_games("Started"))
+        elif atribute == "Box":
+            total = len(self.base.show_box_games())
+            finished = len(self.base.show_box_games("Finished"))
+            not_started = len(self.base.show_box_games("Not started"))
+            started = len(self.base.show_box_games("Started"))
+        elif atribute == "Free":
+            total = len(self.base.show_free_games())
+            finished = len(self.base.show_free_games("Finished"))
+            not_started = len(self.base.show_free_games("Not started"))
+            started = len(self.base.show_free_games("Started"))
+        elif atribute == "Purchased":
+            total = len(self.base.show_purchased_games())
+            finished = len(self.base.show_purchased_games("Finished"))
+            not_started = len(self.base.show_purchased_games("Not started"))
+            started = len(self.base.show_purchased_games("Started"))
+        else:
+            total = 0
+            finished = 0
+            not_started = 0
+            started = 0
+
+        return total, finished, not_started, started
