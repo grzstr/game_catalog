@@ -1,5 +1,4 @@
 from manage_database import database
-import pandas as pd
 
 class games_stats():
     def __init__(self):
@@ -97,7 +96,7 @@ class games_stats():
             finished = len(self.base.show_owned_games("Finished"))
             not_started = len(self.base.show_owned_games("Not started"))
             started = len(self.base.show_owned_games("Started"))
-        elif atribute == "Subscripted":
+        elif atribute == "Subscribed":
             total = len(self.base.show_subscription_games())
             finished = len(self.base.show_subscription_games("Finished"))
             not_started = len(self.base.show_subscription_games("Not started"))

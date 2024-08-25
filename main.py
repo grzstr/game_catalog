@@ -4,6 +4,7 @@ from stats import games_stats
 
 def main(page: ft.Page):
     page.title = "Game Catalog"
+    page.theme_mode = ft.ThemeMode.SYSTEM
     stats = games_stats()
     base = stats.base
 
@@ -279,12 +280,13 @@ def main(page: ft.Page):
 
     def add_game_menu(e):
         page.clean()
-        page.add(ft.Text("Add game"))
+        page.add(ft.Text(""))
+        page.add(ft.Text("Add game", style="headlineMedium"))
         title_field = ft.TextField(label="Title")
         copies_field = ft.TextField(label="Number of copies", value="1")
-        time_hours_field = ft.TextField(label="Game time: Hours", value="0")
-        time_minutes_field = ft.TextField(label="Game time: Minutes", value="0")
-        time_seconds_field = ft.TextField(label="Game time: Seconds", value="0")
+        time_hours_field = ft.TextField(label="Game time: Hours", value="0", width=100)
+        time_minutes_field = ft.TextField(label="Game time: Minutes", value="0", width=100)
+        time_seconds_field = ft.TextField(label="Game time: Seconds", value="0", width=100)
         status_field = ft.Dropdown(label="Status", options=[ft.dropdown.Option("Finished"), ft.dropdown.Option("Started"), ft.dropdown.Option("Not started")])
         status_field.value = status_field.options[2].key
 
@@ -345,14 +347,20 @@ def main(page: ft.Page):
                             copies_field,
                             ft.Row(controls=[time_hours_field, ft.Text(":"), time_minutes_field, ft.Text(":"), time_seconds_field]),
                             status_field,
-                            ft.Row(controls=[platform_field, add_platform, delete_platform_btn]),
-                            ft.Row(controls=[games_store_field, add_games_store, delete_games_store_btn]),
-                            ft.Row(controls=[subscription_field, add_subscription, delete_subscription_btn]),
+                            platform_field, 
+                            ft.Row(controls=[add_platform, delete_platform_btn]),
+                            games_store_field, 
+                            ft.Row(controls=[add_games_store, delete_games_store_btn]),
+                            subscription_field,
+                            ft.Row(controls=[add_subscription, delete_subscription_btn]),
                             box_field,
                             paid_field,
-                            ft.Row(controls=[publisher_field, add_publisher, delete_publisher_btn]),
-                            ft.Row(controls=[developer_field, add_developer, delete_developer_btn]),
-                            ft.Row(controls=[series_field, add_series, delete_series_btn])], scroll=ft.ScrollMode.AUTO, expand=True))
+                            publisher_field, 
+                            ft.Row(controls=[add_publisher, delete_publisher_btn]),
+                            developer_field, 
+                            ft.Row(controls=[add_developer, delete_developer_btn]),
+                            series_field, 
+                            ft.Row(controls=[add_series, delete_series_btn])], scroll=ft.ScrollMode.AUTO, expand=True))
         
         add_game_btn = ft.ElevatedButton("Add", 
                                    on_click=lambda e:add_game(e,
@@ -394,7 +402,8 @@ def main(page: ft.Page):
     def modify(e, title):
         game = base.show_game(title)[0]
         page.clean()
-        page.add(ft.Text("Modify game"))
+        page.add(ft.Text(""))
+        page.add(ft.Text("Modify game", style="headlineMedium"))
         title_field = ft.TextField(label="Title", value = game[1])
         copies_field = ft.TextField(label="Number of copies", value = game[2])
         if game[3] != "-":
@@ -402,9 +411,9 @@ def main(page: ft.Page):
             time_minutes_field = ft.TextField(label="Game time: Minutes", value=game[3].split(":")[1])
             time_seconds_field = ft.TextField(label="Game time: Seconds", value=game[3].split(":")[2])
         else:
-            time_hours_field = ft.TextField(label="Game time: Hours", value=game[3])
-            time_minutes_field = ft.TextField(label="Game time: Minutes", value=game[3])
-            time_seconds_field = ft.TextField(label="Game time: Seconds", value=game[3])
+            time_hours_field = ft.TextField(label="Game time: Hours", value=game[3], width=100)
+            time_minutes_field = ft.TextField(label="Game time: Minutes", value=game[3], width=100)
+            time_seconds_field = ft.TextField(label="Game time: Seconds", value=game[3], width=100)
         status_field = ft.Dropdown(label="Status", options=[ft.dropdown.Option("Finished"), ft.dropdown.Option("Started"), ft.dropdown.Option("Not started")])
         status_field.value = base.get_status_name(game[4])
 
@@ -464,14 +473,20 @@ def main(page: ft.Page):
                             copies_field,
                             ft.Row(controls=[time_hours_field, ft.Text(":"), time_minutes_field, ft.Text(":"), time_seconds_field]),
                             status_field,
-                            ft.Row(controls=[platform_field, add_platform, delete_platform_btn]),
-                            ft.Row(controls=[games_store_field, add_games_store, delete_games_store_btn]),
-                            ft.Row(controls=[subscription_field, add_subscription, delete_subscription_btn]),
+                            platform_field, 
+                            ft.Row(controls=[add_platform, delete_platform_btn]),
+                            games_store_field, 
+                            ft.Row(controls=[add_games_store, delete_games_store_btn]),
+                            subscription_field, 
+                            ft.Row(controls=[add_subscription, delete_subscription_btn]),
                             box_field,
                             paid_field,
-                            ft.Row(controls=[publisher_field, add_publisher, delete_publisher_btn]),
-                            ft.Row(controls=[developer_field, add_developer, delete_developer_btn]),
-                            ft.Row(controls=[series_field, add_series, delete_series_btn])], scroll=ft.ScrollMode.AUTO, expand=True)
+                            publisher_field, 
+                            ft.Row(controls=[add_publisher, delete_publisher_btn]),
+                            developer_field, 
+                            ft.Row(controls=[add_developer, delete_developer_btn]),
+                            series_field, 
+                            ft.Row(controls=[add_series, delete_series_btn])], scroll=ft.ScrollMode.AUTO, expand=True)
 
         page.add(games_fields)
         
@@ -499,10 +514,12 @@ def main(page: ft.Page):
         games = ft.Dropdown(label="Games list")
         for game in base.show_games():
             games.options.append(ft.dropdown.Option(game[1]))
+        page.add(ft.Text(""))
         page.add(games)
         page.add(ft.Row(controls=[ft.ElevatedButton("Delete game", on_click=lambda e:delete_game(e, games.value), data=0), 
-                                  ft.ElevatedButton("Modify", on_click=lambda e:modify(e, games.value)), 
-                                  ft.ElevatedButton("Back", on_click=lambda e:main(page))]))
+                                  ft.ElevatedButton("Modify", on_click=lambda e:modify(e, games.value))]))
+        page.add(ft.Row(controls=[ft.ElevatedButton("Back", on_click=lambda e:main(page))]))
+
 
     def create_database(e):
         base.connect()
@@ -540,6 +557,114 @@ def main(page: ft.Page):
         else:
             return "black"
 
+    def delete_dialog(e, dlg_modal, title):
+        page.close(dlg_modal)
+        time.sleep(0.5)
+        delete_game(e, title)
+
+    def show_all_game_info(e, title):
+        game = base.show_game(title)[0]
+
+        game_info = ft.DataTable(columns=[
+                ft.DataColumn(ft.Text("")),
+                ft.DataColumn(ft.Text(""))
+            ],
+            rows =[
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("ID")),
+                        ft.DataCell(ft.Text(game[0]))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Title")),
+                        ft.DataCell(ft.Text(game[1]))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Copies")),
+                        ft.DataCell(ft.Text(game[2]))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Game time (H:M:S)")),
+                        ft.DataCell(ft.Text(game[3]))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Status")),
+                        ft.DataCell(ft.Text(base.get_status_name(game[4])))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Platform")),
+                        ft.DataCell(ft.Text(base.get_platform_name(game[5])))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Games store")),
+                        ft.DataCell(ft.Text(base.get_games_store_name(game[6])))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Subscription")),
+                        ft.DataCell(ft.Text(base.get_subscription_name(game[7])))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Box")),
+                        ft.DataCell(ft.Text(box_status(game[8])))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Paid")),
+                        ft.DataCell(ft.Text(paid_status(game[9])))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Publisher")),
+                        ft.DataCell(ft.Text(base.get_publisher_name(game[10])))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Developer")),
+                        ft.DataCell(ft.Text(base.get_developer_name(game[11])))
+                    ], 
+                ),
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text("Serie")),
+                        ft.DataCell(ft.Text(base.get_series_name(game[12])))
+                    ], 
+                ),
+            ],
+            data_row_max_height=float("inf"),
+            column_spacing= 10)
+
+        dlg_modal = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Game information"),
+            content=ft.Column([game_info], scroll=ft.ScrollMode.AUTO, expand=True),
+            actions=[
+                ft.Row(controls=[ft.TextButton("Delete game", on_click=lambda e:delete_dialog(e, dlg_modal, game[1])), 
+                                 ft.TextButton("Close", on_click=lambda e:page.close(dlg_modal))]),
+            ],
+            actions_alignment=ft.MainAxisAlignment.START,
+        )
+        page.open(dlg_modal)
+
+
     def get_games_datatable(begin = 0, end = -1, find = None, filters = None):
         games_rows = []
         
@@ -553,44 +678,47 @@ def main(page: ft.Page):
 
         for game in list_range:
             cell_tab = []
-            cell_tab.append(ft.DataCell(ft.Text(game[0])))
-            cell_tab.append(ft.DataCell(ft.Text(game[1])))
-            cell_tab.append(ft.DataCell(ft.Text(game[2])))
-            cell_tab.append(ft.DataCell(ft.Text(game[3])))
-            cell_tab.append(ft.DataCell(ft.Text(base.get_status_name(game[4]))))
-            cell_tab.append(ft.DataCell(ft.Text(base.get_platform_name(game[5]))))
-            cell_tab.append(ft.DataCell(ft.Text(base.get_games_store_name(game[6]))))
-            cell_tab.append(ft.DataCell(ft.Text(base.get_subscription_name(game[7]))))
-            cell_tab.append(ft.DataCell(ft.Text(box_status(game[8]))))
-            cell_tab.append(ft.DataCell(ft.Text(paid_status(game[9]))))
-            cell_tab.append(ft.DataCell(ft.Text(base.get_publisher_name(game[10]))))
-            cell_tab.append(ft.DataCell(ft.Text(base.get_developer_name(game[11]))))
-            cell_tab.append(ft.DataCell(ft.Text(base.get_series_name(game[12]))))
+            cell_tab.append(ft.DataCell(ft.Text(game[0]), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
+            cell_tab.append(ft.DataCell(ft.Text(game[1]), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
+            #cell_tab.append(ft.DataCell(ft.Text(game[2]), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
+            #cell_tab.append(ft.DataCell(ft.Text(game[3]), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
+            #cell_tab.append(ft.DataCell(ft.Text(base.get_status_name(game[4])), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
+            cell_tab.append(ft.DataCell(ft.Text(base.get_platform_name(game[5])), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
+            cell_tab.append(ft.DataCell(ft.Text(base.get_games_store_name(game[6])), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
+            #cell_tab.append(ft.DataCell(ft.Text(base.get_subscription_name(game[7])), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
+            #cell_tab.append(ft.DataCell(ft.Text(box_status(game[8]), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g))))
+            #cell_tab.append(ft.DataCell(ft.Text(paid_status(game[9])), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
+            #cell_tab.append(ft.DataCell(ft.Text(base.get_publisher_name(game[10])), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
+            #cell_tab.append(ft.DataCell(ft.Text(base.get_developer_name(game[11])), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
+            #cell_tab.append(ft.DataCell(ft.Text(base.get_series_name(game[12])), on_tap=lambda e, g=game[1]:show_all_game_info(e, g), on_long_press=lambda e, g = game[1]:modify(e, g)))
             games_rows.append(ft.DataRow(cells=cell_tab, color=set_color(game[4])))
         games_columns = []
         games_columns.append(ft.DataColumn(ft.Text("ID")))
         games_columns.append(ft.DataColumn(ft.Text("Title")))
-        games_columns.append(ft.DataColumn(ft.Text("Copies")))
-        games_columns.append(ft.DataColumn(ft.Text("Game time (H:M:S)")))
-        games_columns.append(ft.DataColumn(ft.Text("Status")))
+        #games_columns.append(ft.DataColumn(ft.Text("Copies")))
+        #games_columns.append(ft.DataColumn(ft.Text("Game time\n(H:M:S)")))
+        #games_columns.append(ft.DataColumn(ft.Text("Status")))
         games_columns.append(ft.DataColumn(ft.Text("Platform")))
-        games_columns.append(ft.DataColumn(ft.Text("Games store")))
-        games_columns.append(ft.DataColumn(ft.Text("Subscription")))
-        games_columns.append(ft.DataColumn(ft.Text("Box")))
-        games_columns.append(ft.DataColumn(ft.Text("Paid")))
-        games_columns.append(ft.DataColumn(ft.Text("Publisher")))
-        games_columns.append(ft.DataColumn(ft.Text("Developer")))
-        games_columns.append(ft.DataColumn(ft.Text("Serie")))           
+        games_columns.append(ft.DataColumn(ft.Text("Games\nstore")))
+        #games_columns.append(ft.DataColumn(ft.Text("Subscription")))
+        #games_columns.append(ft.DataColumn(ft.Text("Box")))
+        #games_columns.append(ft.DataColumn(ft.Text("Paid")))
+        #games_columns.append(ft.DataColumn(ft.Text("Publisher")))
+        #games_columns.append(ft.DataColumn(ft.Text("Developer")))
+        #games_columns.append(ft.DataColumn(ft.Text("Serie")))           
 
         table = ft.DataTable(
             sort_column_index=0,
             sort_ascending=True,
+            data_row_max_height=float("inf"),
+            scale = 1,
             show_checkbox_column=True,
+            column_spacing= 20,
             columns= games_columns,
             rows = games_rows
         )
     
-        return ft.Column([table], scroll=ft.ScrollMode.AUTO, expand=True)
+        return ft.Column([table], scroll=ft.ScrollMode.ALWAYS, expand=True, adaptive = True)
 
     def move_left_game_list(list_begin, list_end):
         if list_begin - 50 < 0:
@@ -765,26 +893,16 @@ def main(page: ft.Page):
         dlg_modal = ft.AlertDialog(
             modal=True,
             title=ft.Text("List filters"),
-            content=ft.Tabs(
-                    selected_index=0,
-                    animation_duration=300,
-                    tabs=[
-                        ft.Tab(
-                            text="Sort by",
-                            content=ft.Column([c12, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11,
-                                               ft.Row(controls=[ft.TextButton("Set filters", on_click=lambda e:set_sort(dlg_modal, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12)), 
-                                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))])])),
+            content=ft.Column([ft.Text("Show only:"),
+                                filter_field, 
+                                chosen_filter_field,
+                                ft.Row(controls=[ft.TextButton("Show", on_click=lambda e:set_show(dlg_modal, filter_field.value, chosen_filter_field.value)), 
+                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))]),
+                                ft.Text("Sort by:"),
+                                c12, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11,
+                                ft.Row(controls=[ft.TextButton("Sort", on_click=lambda e:set_sort(dlg_modal, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12)), 
+                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))])]),
 
-                        ft.Tab(
-                            text="Show only",
-                            content=ft.Column([filter_field, 
-                                               chosen_filter_field,
-                                               ft.Row(controls=[ft.TextButton("Set filters", on_click=lambda e:set_show(dlg_modal, filter_field.value, chosen_filter_field.value)), 
-                                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))])])),
-                    ],
-                    expand=True,
-                    scrollable=True,
-                ),
             scrollable=True,
             actions_alignment=ft.MainAxisAlignment.START,
         )
@@ -838,29 +956,18 @@ def main(page: ft.Page):
         dlg_modal = ft.AlertDialog(
             modal=True,
             title=ft.Text("List filters"),
-            content=ft.Tabs(
-                    selected_index=0,
-                    animation_duration=300,
-                    tabs=[
-                        ft.Tab(
-                            text="Sort by",
-                            content=ft.Column([c12, c4, c9, c10,
-                                               ft.Row(controls=[ft.TextButton("Set filters", on_click=lambda e:set_wishlist_sort(dlg_modal, c4, c9, c10, c12)), 
-                                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))])])),
-
-                        ft.Tab(
-                            text="Show only",
-                            content=ft.Column([filter_field, 
-                                               chosen_filter_field,
-                                               ft.Row(controls=[ft.TextButton("Set filters", on_click=lambda e:set_wishlist_show(dlg_modal, filter_field.value, chosen_filter_field.value)), 
-                                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))])])),
-                    ],
-                    expand=True,
-                    scrollable=True,
-                ),
+            content=ft.Column([ft.Text("Show only:"),
+                                filter_field, 
+                                chosen_filter_field,
+                                ft.Row(controls=[ft.TextButton("Show", on_click=lambda e:set_wishlist_show(dlg_modal, filter_field.value, chosen_filter_field.value)), 
+                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))]),
+                                ft.Text("Sort by:"),
+                                c12, c4, c9, c10,
+                                ft.Row(controls=[ft.TextButton("Sort", on_click=lambda e:set_wishlist_sort(dlg_modal, c4, c9, c10, c12)), 
+                                                ft.TextButton("Back", on_click=lambda e:page.close(dlg_modal))])]),
             scrollable=True,
-            actions_alignment=ft.MainAxisAlignment.START,
-        )
+            actions_alignment=ft.MainAxisAlignment.START
+            )
         page.open(dlg_modal)
 
 
@@ -883,7 +990,9 @@ def main(page: ft.Page):
                 else:
                     show_all = ft.ElevatedButton("Show all", on_click=lambda e:init_navbar(0, len(base.show_games())), data=0)
                 return ft.Column([
+                    ft.Text(" "),
                     ft.Text("Game list", style="headlineMedium"),
+                    ft.Text(" "),
                     ft.Row(controls=[ft.ElevatedButton("Add game", on_click=add_game_menu, data=0),
                                      ft.ElevatedButton("Edit game list", on_click=edit_game_menu, data=0)]),
                     ft.Row(controls=[search_btn,
@@ -895,10 +1004,14 @@ def main(page: ft.Page):
                     ft.Divider(),
                     get_games_datatable(list_begin, list_end, find, filters),
                     ft.Divider()
-                    ], scroll=ft.ScrollMode.AUTO, expand=True)
+                    ], 
+                    scroll=ft.ScrollMode.AUTO, 
+                    expand=True)
             else:
                 return ft.Column([
+                    ft.Text(" "),
                     ft.Text("Game list", style="headlineMedium"),
+                    ft.Text(" "),
                     ft.ElevatedButton("Add game", on_click=add_game_menu, data=0)
                     ])
         else:
@@ -957,15 +1070,16 @@ def main(page: ft.Page):
             bar_groups=bar_groups,
             border=ft.border.all(1, ft.colors.GREY_400),
             left_axis=ft.ChartAxis(
-                labels_size=40, title=ft.Text("Value"), title_size=40
+                labels_size=40, title=ft.Text("Value"), title_size=20
             ),
-            bottom_axis=ft.ChartAxis(labels=labels, labels_size=80, title=ft.Text("Games stores"), show_labels=True),
+            bottom_axis=ft.ChartAxis(labels=labels, labels_size=70, title=ft.Text("Games stores"), show_labels=True),
             horizontal_grid_lines=ft.ChartGridLines(
                 color=ft.colors.GREY_300, width=1, dash_pattern=[3, 3]
             ),
             tooltip_bgcolor=ft.colors.with_opacity(0.5, ft.colors.GREY_300),
             max_y=max_value + 10,
             min_y=0,
+            groups_space=1000,
             interactive=True,
             expand=False,
         )
@@ -1007,12 +1121,15 @@ def main(page: ft.Page):
         max_value = 0
 
         i = 0
-        for attribute in ["Owned", "Subscripted", "Digital", "CD-Action", "Box + CD-Action", "Box", "Free", "Purchased"]:
+        for attribute in ["Owned", "Subscribed", "Digital", "CD-Action", "Box + CD-Action", "Box", "Free", "Purchased"]:
             total, finished, not_started, started = stats.total_games_summary(attribute)
             bar_groups.append(ft.BarChartGroup(x=i, bar_rods=[ft.BarChartRod(from_y=0,to_y=finished, color="green"),
                                                               ft.BarChartRod(from_y=0,to_y=started, color="orange"),
                                                               ft.BarChartRod(from_y=0,to_y=not_started, color="red")]))
-            labels.append(ft.ChartAxisLabel(value=i, label=ft.Container(ft.Text(attribute, text_align=ft.TextAlign.CENTER), padding=1)))
+            if attribute == "Box + CD-Action":
+                labels.append(ft.ChartAxisLabel(value=i, label=ft.Container(ft.Text("Box\n+\nCD-Action", text_align=ft.TextAlign.CENTER), padding=1)))
+            else:
+                labels.append(ft.ChartAxisLabel(value=i, label=ft.Container(ft.Text(attribute, text_align=ft.TextAlign.CENTER), padding=1)))
             i+=1
 
             if max_value < max([finished, not_started, started]):
@@ -1022,9 +1139,9 @@ def main(page: ft.Page):
             bar_groups= bar_groups,
             border=ft.border.all(1, ft.colors.GREY_400),
             left_axis=ft.ChartAxis(
-                labels_size=40, title=ft.Text("Value"), title_size=40
+                labels_size=40, title=ft.Text("Value"), title_size=20, 
             ),
-            bottom_axis=ft.ChartAxis(labels = labels, labels_size=80, title=ft.Text("Attributes"), show_labels=True),
+            bottom_axis=ft.ChartAxis(labels = labels, labels_size=65, title=ft.Text("Attributes"), title_size=20, show_labels=True),
             horizontal_grid_lines=ft.ChartGridLines(
                 color=ft.colors.GREY_300, width=1, dash_pattern=[3, 3]
             ),
@@ -1070,28 +1187,28 @@ def main(page: ft.Page):
 
     def number_of_games_table():
         return ft.DataTable(columns=[
-                ft.DataColumn(ft.Text("Number of games:")),
+                ft.DataColumn(ft.Text("Number of\ngames:")),
                 ft.DataColumn(ft.Text("Value:"))
             ],
             rows =[
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text("Started:")),
-                        ft.DataCell(ft.Text(f"{len(base.show_games(sort=f"status_id = {base.get_status_id("Started")}"))}"))
+                        ft.DataCell(ft.Text(str(len(base.show_games(sort=f'status_id = {base.get_status_id("Started")}')))))
                     ], 
                     #color="orange"
                 ),
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text("Not Started:")),
-                        ft.DataCell(ft.Text(f"{len(base.show_games(sort=f"status_id = {base.get_status_id("Not started")}"))}"))
+                        ft.DataCell(ft.Text(str(len(base.show_games(sort=f'status_id = {base.get_status_id("Not started")}')))))
                     ],
                     #color="red"
                 ),
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text("Finished:")),
-                        ft.DataCell(ft.Text(f"{len(base.show_games(sort=f"status_id = {base.get_status_id("Finished")}"))}"))
+                        ft.DataCell(ft.Text(str(len(base.show_games(sort=f'status_id = {base.get_status_id("Finished")}')))))
                     ],
                     #color="green"
                 ),
@@ -1109,7 +1226,7 @@ def main(page: ft.Page):
                 ),
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text("Subscripted")),
+                        ft.DataCell(ft.Text("Subscribed")),
                         ft.DataCell(ft.Text(str(len(base.show_subscription_games()))))
                     ]
                 ),
@@ -1137,14 +1254,13 @@ def main(page: ft.Page):
                         ft.DataCell(ft.Text(str(len(base.show_digital_games()))))
                     ]
                 ),
-            ]
-
-            )
+            ],
+            column_spacing= 10)
 
     def total_game_time_table():
         years, days, hours, minutes, seconds = stats.total_playing_time()
         return ft.DataTable(columns=[
-                ft.DataColumn(ft.Text("Total playing time:")),
+                ft.DataColumn(ft.Text("Total\nplaying time:")),
                 ft.DataColumn(ft.Text("Value:"))
             ],
             rows =[
@@ -1178,14 +1294,15 @@ def main(page: ft.Page):
                         ft.DataCell(ft.Text(f"{int(seconds)}"))
                     ]
                 ),
-            ]
-            )    
+            ],
+            column_spacing= 10,
+            data_row_max_height=float("inf"))    
 
     def the_longest_game_time_table():
         time, index = stats.the_longest_playing_time()
         games = base.show_games()
         return ft.DataTable(columns=[
-                ft.DataColumn(ft.Text("The longest playing time:")),
+                ft.DataColumn(ft.Text("The longest\nplaying time:")),
                 ft.DataColumn(ft.Text("Value:"))
             ],
             rows =[
@@ -1201,14 +1318,15 @@ def main(page: ft.Page):
                         ft.DataCell(ft.Text(games[index][1]))
                     ]
                 )
-            ]
-            )          
+            ],
+            column_spacing= 10,
+            data_row_max_height=float("inf"))          
 
     def the_shortest_game_time_table():
         time, index = stats.the_shortest_playing_time()
         games = base.show_games()
         return ft.DataTable(columns=[
-                ft.DataColumn(ft.Text("The shortest playing time:")),
+                ft.DataColumn(ft.Text("The shortest\nplaying time:")),
                 ft.DataColumn(ft.Text("Value:"))
             ],
             rows =[
@@ -1224,13 +1342,14 @@ def main(page: ft.Page):
                         ft.DataCell(ft.Text(games[index][1]))
                     ]
                 )
-            ]
-            )     
+            ],
+            column_spacing= 10,
+            data_row_max_height=float("inf"))     
 
     def total_games_summary():
         total_games_table = []
         total_number_of_games = len(base.show_games())
-        for atribute in ["Owned", "Subscripted", "Digital", "CD-Action", "Box + CD-Action", "Box", "Free", "Purchased"]:
+        for atribute in ["Owned", "Subscribed", "Digital", "CD-Action", "Box + CD-Action", "Box", "Free", "Purchased"]:
             total, finished, not_started, started = stats.total_games_summary(atribute)
             total_games_table.append(ft.Column([
                                 ft.Text(atribute, text_align=ft.TextAlign.CENTER, size = 20),
@@ -1284,7 +1403,8 @@ def main(page: ft.Page):
                                             ], color = "red",
                                         ),
                                     ],
-                                ),
+                                column_spacing= 10,
+                                data_row_max_height=float("inf"),),
                             ])
                         )
             total_games_table.append(ft.Divider())
@@ -1295,13 +1415,13 @@ def main(page: ft.Page):
     def statistics_tabs():          
             return ft.Tabs(
             selected_index=0,
-            animation_duration=300,
+            animation_duration=300, 
             tabs=[
             ft.Tab(
                 text="Summaries",
                 content=ft.Column([
                         ft.Text(""),
-                        ft.Text("Summaries of games database."),
+                        ft.Text("Summaries of games database:", style="headlineMedium"),
                         number_of_games_table(),
                         ft.Divider(),
                         games_store_plot(),
@@ -1313,7 +1433,7 @@ def main(page: ft.Page):
             ft.Tab(
                 text="Playing time",
                 content=ft.Column([
-                        ft.Text("Playing time."),
+                        ft.Text("Playing time:", style="headlineMedium"),
                         ft.Divider(),
                         total_game_time_table(),
                         ft.Divider(),
@@ -1328,16 +1448,47 @@ def main(page: ft.Page):
             
             
     def statistics_view():
+        '''
         if base.exist():
             return ft.Column([
+                ft.Text(" "),
                 ft.Text("Statistics View", style="headlineMedium"),
+                ft.Text(" "),
                 statistics_tabs(),
             ], scroll=ft.ScrollMode.AUTO, expand=True)
         else:
             return ft.Column([
                 ft.Text("No database found!")
                 ])
-        
+        '''
+        if base.exist():
+            return ft.Column([
+                ft.Text(" "),
+                ft.Text("Statistics", style="headlineMedium"),
+                ft.Text(" "),
+                ft.Text("Playing time:", text_align=ft.TextAlign.CENTER, size=20),
+                ft.Divider(),
+                total_game_time_table(),
+                ft.Divider(),
+                the_longest_game_time_table(),
+                ft.Divider(),
+                the_shortest_game_time_table(),
+                ft.Divider(),     
+                ft.Text(""),
+                ft.Text("Summaries of games database:", text_align=ft.TextAlign.CENTER, size=20),
+                number_of_games_table(),
+                ft.Divider(),
+                games_store_plot(),
+                ft.Divider(),
+                total_games_plot(),
+                ft.Divider(), 
+                total_games_summary()   
+            ], scroll=ft.ScrollMode.AUTO, expand=True)
+        else:
+            return ft.Column([
+                ft.Text("No database found!")
+                ])
+
     # ***************
     # WISHLIST VIEW
     # ***************
@@ -1358,7 +1509,8 @@ def main(page: ft.Page):
 
     def add_game_to_wishlist_menu(e):
         page.clean()
-        page.add(ft.Text("Add game"))
+        page.add(ft.Text(" "))
+        page.add(ft.Text("Add game", style="headlineMedium"))
         title_field = ft.TextField(label="Title")
         developer_field = ft.Dropdown(label="Developer")
         for database_developer in base.show_developer():
@@ -1379,9 +1531,12 @@ def main(page: ft.Page):
         delete_publisher_btn = ft.ElevatedButton("Delete publisher", on_click=lambda e:delete_publisher(e, publisher_field)) 
 
         games_fields = ft.Column([title_field,
-                            ft.Row(controls=[platform_field, add_platform, delete_platform_btn]),
-                            ft.Row(controls=[publisher_field, add_publisher, delete_publisher_btn]),
-                            ft.Row(controls=[developer_field, add_developer, delete_developer_btn])], scroll=ft.ScrollMode.AUTO, expand=True)
+                            platform_field,       
+                            ft.Row(controls=[add_platform, delete_platform_btn]),
+                            publisher_field, 
+                            ft.Row(controls=[add_publisher, delete_publisher_btn]),
+                            developer_field, 
+                            ft.Row(controls=[add_developer, delete_developer_btn])], scroll=ft.ScrollMode.AUTO, expand=True)
 
         page.add(games_fields)
         add_game_btn = ft.ElevatedButton("Add", 
@@ -1404,7 +1559,8 @@ def main(page: ft.Page):
     def modify_wishlist(e, title):
         game = base.show_wishlist_game(title)[0]
         page.clean()
-        page.add(ft.Text("Modify game"))
+        page.add(ft.Text(""))
+        page.add(ft.Text("Modify game", style="headlineMedium"))
         title_field = ft.TextField(label="Title", value = game[1])
 
         platform_field = ft.Dropdown(label="Platform")
@@ -1431,9 +1587,12 @@ def main(page: ft.Page):
         delete_publisher_btn = ft.ElevatedButton("Delete publisher", on_click=lambda e:delete_publisher(e, publisher_field)) 
 
         games_fields = ft.Column([title_field,
-                            ft.Row(controls=[platform_field, add_platform, delete_platform_btn]),
-                            ft.Row(controls=[publisher_field, add_publisher, delete_publisher_btn]),
-                            ft.Row(controls=[developer_field, add_developer, delete_developer_btn])], scroll=ft.ScrollMode.AUTO, expand=True)
+                            platform_field, 
+                            ft.Row(controls=[add_platform, delete_platform_btn]),
+                            publisher_field, 
+                            ft.Row(controls=[add_publisher, delete_publisher_btn]),
+                            developer_field, 
+                            ft.Row(controls=[add_developer, delete_developer_btn])], scroll=ft.ScrollMode.AUTO, expand=True)
 
         page.add(games_fields)
         
@@ -1467,12 +1626,13 @@ def main(page: ft.Page):
     def move_game_menu(e, title):
         game = base.show_wishlist_game(title)[0]
         page.clean()
-        page.add(ft.Text("Move game from wishlist to game list"))
+        page.add(ft.Text(""))
+        page.add(ft.Text("Move game from wishlist to game list", style="headlineMedium"))
         title_field = ft.TextField(label="Title", value=game[1])
         copies_field = ft.TextField(label="Number of copies", value="1")
-        time_hours_field = ft.TextField(label="Game time: Hours", value="0")
-        time_minutes_field = ft.TextField(label="Game time: Minutes", value="0")
-        time_seconds_field = ft.TextField(label="Game time: Seconds", value="0")
+        time_hours_field = ft.TextField(label="Game time: Hours", value="0", width=100)
+        time_minutes_field = ft.TextField(label="Game time: Minutes", value="0", width=100)
+        time_seconds_field = ft.TextField(label="Game time: Seconds", value="0", width=100)
         status_field = ft.Dropdown(label="Status", options=[ft.dropdown.Option("Finished"), ft.dropdown.Option("Started"), ft.dropdown.Option("Not started")])
         status_field.value = status_field.options[2].key
 
@@ -1529,14 +1689,20 @@ def main(page: ft.Page):
                             copies_field,
                             ft.Row(controls=[time_hours_field, ft.Text(":"), time_minutes_field, ft.Text(":"), time_seconds_field]),
                             status_field,
-                            ft.Row(controls=[platform_field, add_platform, delete_platform_btn]),
-                            ft.Row(controls=[games_store_field, add_games_store, delete_games_store_btn]),
-                            ft.Row(controls=[subscription_field, add_subscription, delete_subscription_btn]),
+                            platform_field, 
+                            ft.Row(controls=[add_platform, delete_platform_btn]),
+                            games_store_field, 
+                            ft.Row(controls=[add_games_store, delete_games_store_btn]),
+                            subscription_field, 
+                            ft.Row(controls=[add_subscription, delete_subscription_btn]),
                             box_field,
                             paid_field,
-                            ft.Row(controls=[publisher_field, add_publisher, delete_publisher_btn]),
-                            ft.Row(controls=[developer_field, add_developer, delete_developer_btn]),
-                            ft.Row(controls=[series_field, add_series, delete_series_btn])], scroll=ft.ScrollMode.AUTO, expand=True)
+                            publisher_field, 
+                            ft.Row(controls=[add_publisher, delete_publisher_btn]),
+                            developer_field, 
+                            ft.Row(controls=[add_developer, delete_developer_btn]),
+                            series_field, 
+                            ft.Row(controls=[add_series, delete_series_btn])], scroll=ft.ScrollMode.AUTO, expand=True)
 
         page.add(games_fields)
         
@@ -1565,13 +1731,16 @@ def main(page: ft.Page):
 
     def edit_wishlist_game_menu(e):
         page.clean()
+        page.add(ft.Text(" "))
+        page.add(ft.Text(" "))
         games = ft.Dropdown(label="Wishlist")
         for game in base.show_wishlist_games():
             games.options.append(ft.dropdown.Option(game[1]))
         page.add(games)
+        page.add(ft.Text(""))
         page.add(ft.Row(controls=[ft.ElevatedButton("Delete game", on_click=lambda e:delete_wishlist_game(e, games.value), data=0), 
-                                  ft.ElevatedButton("Modify", on_click=lambda e:modify_wishlist(e, games.value)),
-                                  ft.ElevatedButton("Move to game list", on_click=lambda e:move_game_menu(e, games.value)), 
+                                  ft.ElevatedButton("Modify", on_click=lambda e:modify_wishlist(e, games.value))]))
+        page.add(ft.Row(controls=[ft.ElevatedButton("Move to game list", on_click=lambda e:move_game_menu(e, games.value)), 
                                   ft.ElevatedButton("Back", on_click=lambda e:main(page))]))
 
     def get_wishlist_games_datatable(begin = 0, end = -1, find=None, filters=None):
@@ -1585,11 +1754,11 @@ def main(page: ft.Page):
 
         for game in list_range:
             cell_tab = []
-            cell_tab.append(ft.DataCell(ft.Text(game[0])))
-            cell_tab.append(ft.DataCell(ft.Text(game[1])))
-            cell_tab.append(ft.DataCell(ft.Text(base.get_platform_name(game[2]))))
-            cell_tab.append(ft.DataCell(ft.Text(base.get_publisher_name(game[3]))))
-            cell_tab.append(ft.DataCell(ft.Text(base.get_developer_name(game[4]))))
+            cell_tab.append(ft.DataCell(ft.Text(game[0]), on_long_press=lambda e, g = game[1]:modify_wishlist(e,g)))
+            cell_tab.append(ft.DataCell(ft.Text(game[1]), on_long_press=lambda e, g = game[1]:modify_wishlist(e,g)))
+            cell_tab.append(ft.DataCell(ft.Text(base.get_platform_name(game[2])), on_long_press=lambda e, g = game[1]:modify_wishlist(e,g)))
+            cell_tab.append(ft.DataCell(ft.Text(base.get_publisher_name(game[3])), on_long_press=lambda e, g = game[1]:modify_wishlist(e,g)))
+            cell_tab.append(ft.DataCell(ft.Text(base.get_developer_name(game[4])), on_long_press=lambda e, g = game[1]:modify_wishlist(e,g)))
             games_rows.append(ft.DataRow(cells=cell_tab))
         games_columns = []
         games_columns.append(ft.DataColumn(ft.Text("ID")))
@@ -1601,7 +1770,9 @@ def main(page: ft.Page):
         table = ft.DataTable(
             sort_column_index=0,
             sort_ascending=True,
+            data_row_max_height=float("inf"),
             show_checkbox_column=True,
+            column_spacing= 10,
             columns= games_columns,
             rows = games_rows
         )
@@ -1626,7 +1797,9 @@ def main(page: ft.Page):
                     show_all = ft.ElevatedButton("Show all", on_click=lambda e:init_navbar(0, len(base.show_games())), data=0)
 
                 return ft.Column([
+                    ft.Text(" "),
                     ft.Text("Wishlist", style="headlineMedium"),
+                    ft.Text(" "),
                     ft.Row(controls=[ft.ElevatedButton("Add game", on_click=add_game_to_wishlist_menu, data=0),
                                      ft.ElevatedButton("Edit wishlist", on_click=edit_wishlist_game_menu, data=0)]),
                     ft.Row(controls=[search_btn,
@@ -1641,11 +1814,14 @@ def main(page: ft.Page):
                     ], scroll=ft.ScrollMode.AUTO, expand=True)
             else:
                 return ft.Column([
+                    ft.Text(" "),
                     ft.Text("Wishlist", style="headlineMedium"),
+                    ft.Text(" "),
                     ft.ElevatedButton("Add game", on_click=add_game_to_wishlist_menu, data=0)
                     ])
         else:
             return ft.Column([
+                ft.Text(" "),
                 ft.Text("No database found!"),
                 ft.ElevatedButton("Create a new database", on_click=create_database, data=0),
                 ft.ElevatedButton("Load database from Google Drive", on_click=add_game_menu, data=0)
@@ -1655,17 +1831,21 @@ def main(page: ft.Page):
     # SETTINGS VIEW
     # ***************
 
+    def turn_theme_mode(e):
+        page.theme_mode = e.control.value
+
+
     def settings_view():
         return ft.Column([
-            ft.Text("Settings View", style="headlineMedium"),
-            ft.Text("Explore different options available."),
-            ft.ListView([
-                ft.Text("Option 1"),
-                ft.Text("Option 2"),
-                ft.Text("Option 3"),
-            ]),
-
-        ])
+            ft.Text(" "),
+            ft.Text("Settings", style="headlineMedium"),
+            ft.Text(" "),
+            ft.Text("Select theme mode:"),
+            ft.RadioGroup(content=ft.Column([
+                ft.Radio(label="Dark", value=ft.ThemeMode.DARK),
+                ft.Radio(label="Light", value=ft.ThemeMode.LIGHT),
+                ft.Radio(label="System", value=ft.ThemeMode.SYSTEM)]), on_change=lambda e:turn_theme_mode(e)),
+            ])
 
     def on_tab_change(event, list_begin, list_end, find, filters):
         if event.control.selected_index == 0:

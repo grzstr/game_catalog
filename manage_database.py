@@ -1,7 +1,5 @@
 import sqlite3
 import os
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
 
 class database():
     def __init__(self):
@@ -612,7 +610,7 @@ class database():
     def show_owned_games(self, status = None):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        command = f"SELECT * FROM games WHERE subscription_id = {self.get_subscription_id("None", self.get_games_store_id("Other"))}"
+        command = "SELECT * FROM games WHERE subscription_id = " + str(self.get_subscription_id("None", self.get_games_store_id("Other")))
         if status != None:
             command += f" AND status_id = {self.get_status_id(status)}"
         cursor.execute(command)
@@ -623,7 +621,7 @@ class database():
     def show_subscription_games(self, status = None):
         conn = sqlite3.connect(self.database_name)
         cursor = conn.cursor()
-        command = f"SELECT * FROM games WHERE subscription_id <> {self.get_subscription_id("None", self.get_games_store_id("Other"))}"
+        command = "SELECT * FROM games WHERE subscription_id <> " + str(self.get_subscription_id("None", self.get_games_store_id("Other")))
         if status != None:
             command += f" AND status_id = {self.get_status_id(status)}"
         cursor.execute(command)
