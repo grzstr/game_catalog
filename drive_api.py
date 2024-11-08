@@ -1,5 +1,6 @@
 import os
 import os.path
+import io
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -8,7 +9,17 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
+#from Google import Create_Service
+from googleapiclient.http import MediaIoBaseDownload
+
+
 SCOPES = ["https://www.googleapis.com/auth/drive"]
+
+# FROM TUTORIAL
+API_NAME = 'drive'
+API_VERSION = 'v3'
+# ***********
+
 
 class AutorizationError(Exception):
     def __init__(self, drive_dir):
@@ -53,7 +64,7 @@ class GoogleDriveAPI():
         try:
             self.autorize_app()
             try:
-                service = build("drive", 'v3', credentials=self.creds)
+                service = build(API_NAME, API_VERSION, credentials=self.creds)
                 
                 #Checking if the folder exists on Google Drive
                 response = service.files().list(
@@ -80,6 +91,17 @@ class GoogleDriveAPI():
 
                 #Uploading data from computer
                 for file in os.listdir(self.database_dir):
+                    # Sprawdzenie, czy plik o tej samej nazwie istnieje w folderze
+                    existing_files = service.files().list(
+                        q=f"name='{file}' and '{folder_id}' in parents",
+                        spaces='drive'
+                    ).execute()
+
+                    # Jeśli plik istnieje, usuwamy go, aby nadpisać
+                    if existing_files['files']:
+                        for existing_file in existing_files['files']:
+                            service.files().delete(fileId=existing_file['id']).execute()
+
                     file_metadata = {
                         "name": file,
                         "parents": [folder_id]
@@ -96,8 +118,53 @@ class GoogleDriveAPI():
         except AutorizationError as e:
             print(e)
 
-    def download_files():
-        pass
+    def download_files(self):
+        #service = Create_Service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
+        try:
+            self.autorize_app()
+            service = build(API_NAME, API_VERSION, credentials=self.creds)
+                
+            #Find folder id by name
+            response = service.files().list(
+                q=f"name = '{self.database_gdrive_dir}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+                fields = "files(id, name)"
+            ).execute()
+            folders = response.get('files')
+            if not folders:
+                print("Folder o podanej nazwie nie został znaleziony.")
+                return None
+            folder_id =  folders[0]['id'] 
+
+            #Find list of files in the folder
+            response = service.files().list(q=f"'{folder_id}' in parents and trashed=false", 
+                                            fields="files(id, name)").execute()
+            files = response.get('files', [])
+            print(f"Znaleziono {len(files)} plików w folderze {self.database_gdrive_dir}.")
+
+            if not os.path.exists(self.database_dir):
+                os.mkdir(self.database_dir)         
+
+            for file in files:
+                print(f"Pobieranie pliku: {file['name']} (ID: {file['id']})")
+                request = service.files().get_media(fileId=file['id'])
+
+
+                with io.FileIO(os.path.join(self.database_dir, file['name']), "wb") as fh:
+                    downloader = MediaIoBaseDownload(fh, request)
+                    done = False
+                    while not done:
+                        status, done = downloader.next_chunk()
+                        print(f"Pobieranie: {int(status.progress() * 100)}%")
+                
+                print(f"Plik pobrany jako: {self.database_dir}/{file['name']}")
+
+
+
+
+        except AutorizationError as e:
+            print(e)
+
 
 drive = GoogleDriveAPI()
 drive.upload_files()
+#drive.download_files()
