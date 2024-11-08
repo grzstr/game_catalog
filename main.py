@@ -1,11 +1,11 @@
 import flet as ft
 import time
-from stats import games_stats
+from stats import GamesStats
 
 def main(page: ft.Page):
     page.title = "Game Catalog"
     page.theme_mode = ft.ThemeMode.SYSTEM
-    stats = games_stats()
+    stats = GamesStats()
     base = stats.base
 
     #CHECK FUNCTIONS

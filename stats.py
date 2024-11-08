@@ -1,8 +1,8 @@
-from manage_database import database
+from manage_database import Database
 
-class games_stats():
+class GamesStats():
     def __init__(self):
-        self.base = database()
+        self.base = Database()
 
     def convert_time(self, time):
         if isinstance(time, str):

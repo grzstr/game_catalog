@@ -1,4 +1,4 @@
-from manage_database import database
+from manage_database import Database
 import pandas as pd
 
 
@@ -120,7 +120,7 @@ def convert_paid(epic, gog, steam, ea, rockstar, microsoft, ubisoft):
         return 1
 
 excel = pd.read_excel("databases/database.xlsx")
-base = database()
+base = Database()
 
 for data in excel._values:
     time = convert_time(data[2])

@@ -10,7 +10,15 @@ from googleapiclient.http import MediaFileUpload
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
-class gdrive():
+class AutorizationError(Exception):
+    def __init__(self, drive_dir):
+        self.drive_dir = drive_dir
+
+    def __str__(self):
+        return f"Authorization error - cannot find {self.drive_dir}/credentials.json"
+
+
+class GoogleDriveAPI():
     def __init__(self):
         self.creds = None
 
@@ -18,66 +26,78 @@ class gdrive():
         self.database_gdrive_dir = "game_catalog_database"
         self.drive_api_dir = "drive_api"
 
-    def autorization(self):
+    def autorize_app(self):
         # Authorization
-        if os.path.exists(f'{self.drive_api_dir}/token.json'):
-            self.creds = Credentials.from_authorized_user_file(f"{self.drive_api_dir}/token.json", SCOPES)
+        if not os.path.exists(self.drive_api_dir):
+            os.mkdir(self.drive_api_dir)
 
-        if not self.creds or not self.creds.valid:
-            if self.creds and self.creds.expired and self.creds.refresh_token:
-                self.creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    f"{self.drive_api_dir}/credentials.json", SCOPES)
-                self.creds = flow.run_local_server(port=0)
+        if os.path.exists(f"{self.drive_api_dir}/credentials.json"):
+            if os.path.exists(f'{self.drive_api_dir}/token.json'):
+                self.creds = Credentials.from_authorized_user_file(f"{self.drive_api_dir}/token.json", SCOPES)
 
-        with open(f'{self.drive_api_dir}/token.json', 'w') as token:
-            token.write(self.creds.to_json())
+            if not self.creds or not self.creds.valid:
+                if self.creds and self.creds.expired and self.creds.refresh_token:
+                    self.creds.refresh(Request())
+                else:
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        f"{self.drive_api_dir}/credentials.json", SCOPES)
+                    self.creds = flow.run_local_server(port=0)
 
-    def upload(self):
-        self.autorization()
+            with open(f'{self.drive_api_dir}/token.json', 'w') as token:
+                token.write(self.creds.to_json())
+        else:
+            #print(f"Authorization error - cannot find {self.drive_api_dir}/credentials.json")
+            raise AutorizationError(self.drive_api_dir)
+
+    def upload_files(self):
         try:
-            service = build("drive", 'v3', credentials=self.creds)
-            
-            #Checking if the folder exists on Google Drive
-            response = service.files().list(
-                q=f"name='{self.database_gdrive_dir}' and mimeType='application/vnd.google-apps.folder'",
-                spaces='drive'
-            ).execute()
+            self.autorize_app()
+            try:
+                service = build("drive", 'v3', credentials=self.creds)
+                
+                #Checking if the folder exists on Google Drive
+                response = service.files().list(
+                    q=f"name='{self.database_gdrive_dir}' and mimeType='application/vnd.google-apps.folder'",
+                    spaces='drive'
+                ).execute()
 
-            # Creating the folder if not exists on Google Drive
-            if not response['files']:
-                file_metadata = {
-                    "name": self.database_gdrive_dir,
-                    'mimeType': "application/vnd.google-apps.folder"
-                }
+                # Creating the folder if not exists on Google Drive
+                if not response['files']:
+                    file_metadata = {
+                        "name": self.database_gdrive_dir,
+                        'mimeType': "application/vnd.google-apps.folder"
+                    }
 
-                file = service.files().create(body=file_metadata, fields="id").execute()
+                    file = service.files().create(body=file_metadata, fields="id").execute()
 
-                #Getting folder_id of created folder
-                folder_id = file.get('id')
-            
-            #Getting folder_id if folder exists 
-            else:
-                folder_id = response['files'][0]['id']
-
-
-            #Uploading data from computer
-            for file in os.listdir(self.database_dir):
-                file_metadata = {
-                    "name": file,
-                    "parents": [folder_id]
-                }
-
-                media = MediaFileUpload(f"{self.database_dir}/{file}")
-                upload_file = service.files().create(body=file_metadata,
-                                                    media_body = media,
-                                                    fields = "id").execute()
-                print("Uploaded file: " + file)
-
-        except HttpError as e:
-            print("Error: " + str(e))
+                    #Getting folder_id of created folder
+                    folder_id = file.get('id')
+                
+                #Getting folder_id if folder exists 
+                else:
+                    folder_id = response['files'][0]['id']
 
 
-drive = gdrive()
-drive.upload()
+                #Uploading data from computer
+                for file in os.listdir(self.database_dir):
+                    file_metadata = {
+                        "name": file,
+                        "parents": [folder_id]
+                    }
+
+                    media = MediaFileUpload(f"{self.database_dir}/{file}")
+                    upload_file = service.files().create(body=file_metadata,
+                                                        media_body = media,
+                                                        fields = "id").execute()
+                    print("Uploaded file: " + file)
+
+            except HttpError as e:
+                print("Error: " + str(e))
+        except AutorizationError as e:
+            print(e)
+
+    def download_files():
+        pass
+
+drive = GoogleDriveAPI()
+drive.upload_files()
