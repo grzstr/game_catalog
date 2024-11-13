@@ -1832,7 +1832,15 @@ def main(page: ft.Page):
     # ***************
 
     def turn_theme_mode(e):
-        page.theme_mode = e.control.value
+        page.theme_mode = (
+            ft.ThemeMode.DARK
+            if page.theme_mode == ft.ThemeMode.LIGHT
+            else ft.ThemeMode.LIGHT
+        )
+        page.update()
+
+    def turn_gdrive_sync(e):
+        pass
 
 
     def settings_view():
@@ -1841,11 +1849,12 @@ def main(page: ft.Page):
             ft.Text("Settings", style="headlineMedium"),
             ft.Text(" "),
             ft.Text("Select theme mode:"),
-            ft.RadioGroup(content=ft.Column([
-                ft.Radio(label="Dark", value=ft.ThemeMode.DARK),
-                ft.Radio(label="Light", value=ft.ThemeMode.LIGHT),
-                ft.Radio(label="System", value=ft.ThemeMode.SYSTEM)]), on_change=lambda e:turn_theme_mode(e)),
+            ft.Switch(label="Switch to dark mode" if page.theme_mode == ft.ThemeMode.LIGHT else "Switch to light mode", on_change=turn_theme_mode, ),
+            ft.Text(" "),
+            ft.Text("Activate google drive sync:"),
+            ft.Switch(label="Activate Google Drive Sync", on_change=turn_gdrive_sync),
             ])
+
 
     def on_tab_change(event, list_begin, list_end, find, filters):
         if event.control.selected_index == 0:
