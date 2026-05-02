@@ -1,0 +1,2 @@
+pandas
+flet<0.26.0
