@@ -1,2 +1,2 @@
 pandas
-flet<0.26.0
+flet==0.85.0
